@@ -1,5 +1,10 @@
 # Änderungen
 
+## Korrektur der Repository-Installation
+
+- Downloadpakete von `dist/` nach `docs/downloads/` verschoben. Symcon deutet zusätzliche Wurzelordner als Module; `docs` ist ein ausgenommener Dokumentationsordner.
+- Importprüfung auf das vollständige Repository erweitert, zusätzlich zum Installations-ZIP.
+
 ## 1.1 · Build 2 · 2026-10-25
 
 - GUIDs, Klassenname, Präfix und sieben Standard-IDs des Ausgangs-ZIPs beibehalten.

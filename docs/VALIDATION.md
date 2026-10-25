@@ -14,6 +14,7 @@ Das Repository und das lokale Modul-ZIP sind vorbereitet und automatisiert gepr�
 | Werte und Aktionen | in den 48 Assertions enthalten | JSON-String-Push, geänderte Werte, unverändertes Polling, Filtereinheit aus Profil, Standard-/Customprofil-Priorität, Instanz- und Skriptaktion, Integer-/Floattyp, keine künstliche Quellbestätigung, CustomAction=1, entfernter Profilwert, ungültige Werte und Skriptabschluss im Profiltext |
 | Browser | **45 Assertions bestanden** | Chromium 154.0.8037.57, simulierte SDK-Funktion, initiale Werte, JSON-Push, spät verfügbarer SDK-Bridge, nur Profiloptionen, stabiler Auswahl-DOM bei Sensorupdates, Übergabe des numerischen Werts, Quellenbestätigung, Ablehnung und 15-Sekunden-Timeout, fehlende Daten, unzulässiges JSON und sichere Profiltexte |
 | Responsive Darstellung | in den 45 Assertions enthalten | 1180, 700, 360 und 320 px; alle Temperaturen und Steuerung sichtbar, kein horizontaler Überlauf; Desktop-/Mobil-Screenshots visuell geprüft |
+| Import des vollständigen Repositorys | bestanden | Offizieller LibraryLoader lädt die Repository-Wurzel inklusive Downloadpaketen unter `docs`; keine zusätzliche Modulzuordnung |
 | Import des entpackten ZIPs | bestanden | Offizieller LibraryLoader lädt die gesamte Bibliothek, erstellt eine Instanz und rendert die initiale Kachel; fehlende echte Quellen korrekt als Status 104 |
 | Installations-ZIP | bestanden | CRC, erwartete Bibliothekswurzel, bytegleiche Nutzdateien und SHA-256; nochmaliger Build auf Bytegleichheit geprüft |
 

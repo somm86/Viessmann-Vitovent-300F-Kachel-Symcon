@@ -9,7 +9,7 @@ FILES = ['library.json', 'README.md', 'CHANGELOG.md', 'docs/INSTALLATION.md',
          'docs/VALIDATION.md', 'docs/API.md', 'docs/inspect-symcon.php', 'docs/dashboard.png',
          'Vitovent300FTile/module.json', 'Vitovent300FTile/module.php', 'Vitovent300FTile/tile.html']
 version = json.loads((ROOT / 'library.json').read_text())['version']
-dest = ROOT / 'dist'
+dest = ROOT / 'docs' / 'downloads'
 dest.mkdir(exist_ok=True)
 archive = dest / f'Vitovent300F-Kachel-{version}.zip'
 with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
