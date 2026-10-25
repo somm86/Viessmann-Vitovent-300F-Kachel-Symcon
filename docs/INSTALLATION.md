@@ -14,7 +14,7 @@ In Module Control die Repository-URL hinzufügen, veröffentlichten Branch ausw�
 
 ## Lokal mit dem ZIP
 
-1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.4.zip.sha256`).
+1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.5.zip.sha256`).
 2. Auf dem Symcon-Server das Datenverzeichnis ermitteln. Es lässt sich im Skripteditor mit `echo IPS_GetKernelDir();` anzeigen. Typisch unter Linux `/var/lib/symcon/`; bei Containern zählt das Verzeichnis **im Container**. Unter Windows den tatsächlichen Datenpfad verwenden.
 3. Den entpackten Ordner nach `<Datenverzeichnis>/modules/Vitovent300F_Kachel/` kopieren. Beispiel: `/var/lib/symcon/modules/Vitovent300F_Kachel/library.json`. Keine zusätzliche gleichnamige Ordnerebene einfügen. Lesezugriff für den Symcon-Dienst sicherstellen.
 4. Den IP-Symcon-Dienst über die vorhandene Dienst-/Containerverwaltung neu starten. Vorher eigene Konfiguration sichern. Keine zweite Kopie derselben Bibliothek installieren.

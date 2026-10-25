@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.5 · Build 6 · 2026-10-25
+
+- Seitliche Leerflächen der Höhenanpassung beseitigt: interne Breite vor der Skalierung erweitern und Inhalte neu umbrechen, sodass die sichtbare Kachelbreite vollständig genutzt wird.
+- Starre maximale Dashboardbreite entfernt; optimale Skalierung nach tatsächlicher Inhaltsgröße ermitteln.
+- Luftwege bis hinter das Zentralgerät führen, damit sie auch in sehr breiten/flachen Formaten verbunden bleiben.
+- Vollständige Breitenbelegung zusätzlich zu Höhenpassung und Bedienung automatisch prüfen, einschließlich 1412×1168 und 2200×1100 px.
+
 ## 1.4 · Build 5 · 2026-10-25
 
 - Gesamtes Dashboard proportional in verfügbare Breite und Höhe einpassen; zuvor wurden nur Breite und Symbole angepasst.

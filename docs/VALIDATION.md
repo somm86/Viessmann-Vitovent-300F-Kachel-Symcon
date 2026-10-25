@@ -1,4 +1,4 @@
-# Prüfbericht · Version 1.4 · 25. Oktober 2026
+# Prüfbericht · Version 1.5 · 25. Oktober 2026
 
 ## Ergebnis und Reichweite
 
@@ -12,9 +12,9 @@ Das Dashboard wurde an die Bildvorlage angepasst. Der gemeldete Fehler „keine 
 | Manifeste | bestanden | Felder, JSON, URLs, GUIDs unverändert zum Ausgangsarchiv, Klasse, Präfix und Typ |
 | Offizielle SymconStubs | **68 Assertions bestanden** | Lifecycle, Defaults, Formular, Referenzen, Nachrichten, Re-Apply, Quellwechsel/-löschung, Kernelstart, Daten-Push und unverändertes Polling |
 | Auswahl und Aktionen | in den 68 Assertions enthalten | Profile und deren Priorität; moderne Aufzählung ohne Legacy-Assoziationen; ausschließlich echte Werte; Vorrang moderner Darstellung vor alten Profilfeldern; entfernte/ungültige Werte; Integer/Float/Bool/String; Instanz-/Skriptaktion; CustomAction=1; Weitergabe von PHP-Fehlern im Snapshot; Diagnose; sichere Texte |
-| Browser | **95 Assertions bestanden** | Chromium 154.0.8037.57; dokumentierte void-Bridge simuliert; Betriebsart-Buttons, typgetreuer Request, kein vorzeitiger Aktivzustand, Quellbestätigung, PHP-Fehler-Push, optionale Promise-Ablehnung, Timeout, Diagnose, fehlende Auswahl, keine erfundenen Buttons, Bool/String, Quellbereichsbalken und versteckte Balken ohne Grenzen |
-| Responsive Darstellung | in den 95 Assertions enthalten | 1536, 1180, 800, 700, 360 und 320 px; kein horizontaler Überlauf, vier Temperaturen und Steuerung sichtbar; Desktop und Mobil visuell geprüft; tatsächliche Symbolbreiten bei 1536 und 360 px verglichen, Luftsymbol auf kleinen Kacheln weiterhin sichtbar |
-| Höhenanpassung | in den 95 Assertions enthalten | 1180×1000, 1180×300, 800×450, 360×360, 320×200 und 360×1400 px; ganze Darstellung und Schaltflächen innerhalb der Kachel; reine Höhenänderung verkleinert Symbole; Schalten bei 800×350 px; erneute Anpassung nach Öffnen der Diagnose |
+| Browser | **109 Assertions bestanden** | Chromium 154.0.8037.57; dokumentierte void-Bridge simuliert; Betriebsart-Buttons, typgetreuer Request, kein vorzeitiger Aktivzustand, Quellbestätigung, PHP-Fehler-Push, optionale Promise-Ablehnung, Timeout, Diagnose, fehlende Auswahl, keine erfundenen Buttons, Bool/String, Quellbereichsbalken und versteckte Balken ohne Grenzen |
+| Responsive Darstellung | in den 109 Assertions enthalten | 1536, 1180, 800, 700, 360 und 320 px; kein horizontaler Überlauf, vier Temperaturen und Steuerung sichtbar; Desktop und Mobil visuell geprüft; tatsächliche Symbolbreiten bei 1536 und 360 px verglichen, Luftsymbol auf kleinen Kacheln weiterhin sichtbar |
+| Höhenanpassung | in den 109 Assertions enthalten | 1180×1000, 1180×300, 800×450, 360×360, 320×200 und 360×1400, 1412×1168 und 2200×1100 px; volle sichtbare Breite ohne seitliche Schrumpfränder; ganze Darstellung und Schaltflächen innerhalb der Kachel; reine Höhenänderung verkleinert Symbole; Schalten bei 800×350 px; erneute Anpassung nach Öffnen der Diagnose |
 | Import des vollständigen Repositorys | bestanden | Offizieller LibraryLoader lädt Repository-Wurzel einschließlich Downloads unter `docs`, erzeugt genau ein Modul |
 | Import des Installations-ZIPs | bestanden | Ganze Bibliothek importiert, Instanz erstellt, initiale Kachel und Formular erzeugt |
 | ZIP-Build | bestanden | CRC, bytegleiche Nutzdateien, Bibliothekswurzel und SHA-256; wiederholte Builds reproduzierbar |

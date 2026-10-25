@@ -152,12 +152,13 @@ with sync_playwright() as p:
     check(page.locator('.outside > .icon').first.is_visible(), 'air symbol remains visible in small tiles')
     # Regression: changing only the tile height must shrink the entire dashboard.
     height_sizes = {}
-    for width, height in [(1180, 1000), (1180, 300), (800, 450), (360, 360), (320, 200), (360, 1400)]:
+    for width, height in [(1180, 1000), (1180, 300), (800, 450), (360, 360), (320, 200), (360, 1400), (1412, 1168), (2200, 1100)]:
         page.set_viewport_size({'width': width, 'height': height})
         page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
         box = page.locator('.dashboard').bounding_box()
         check(box['y'] >= -1 and box['y'] + box['height'] <= height + 1, f'dashboard fits height {width}x{height}')
         check(box['x'] >= -1 and box['x'] + box['width'] <= width + 1, f'dashboard fits width {width}x{height}')
+        check(box['width'] >= width - 2, f'dashboard uses full tile width {width}x{height}')
         button_box = page.locator('#modeButtons button').last.bounding_box()
         check(button_box['y'] + button_box['height'] <= height + 1, f'mode control stays inside {width}x{height}')
         if width == 1180:

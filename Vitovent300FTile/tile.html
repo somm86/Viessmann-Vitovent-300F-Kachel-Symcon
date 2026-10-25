@@ -35,7 +35,7 @@
 
 /* The HTML SDK viewport is the tile: fit the entire responsive dashboard on both axes. */
 html,body{width:100%;height:100%;overflow:hidden}
-.dashboard{position:absolute;top:0;left:50%;width:100%;margin:0;transform-origin:top center;transform:translateX(-50%) scale(var(--tile-scale,1))}
+.dashboard{position:absolute;top:0;left:50%;width:calc(100% / var(--tile-scale,1));max-width:none;margin:0;transform-origin:top center;transform:translateX(-50%) scale(var(--tile-scale,1))}
 .diagnostic-output{max-height:min(25vh,180px);overflow:auto}
 </style>
 </head>
@@ -60,10 +60,10 @@ html,body{width:100%;height:100%;overflow:hidden}
 <header class="header"><div class="wordmark">VIESSMANN</div><div class="heading"><h1>Vitovent 300-F</h1><div class="subtitle">Wohnraumlüftung</div></div><div class="badge" id="availability"><span class="dot"></span><div><strong id="status">Betriebsart</strong><span id="headerMode">Daten werden geladen</span></div></div><div class="home-icon"><svg class="icon"><use href="#house"/></svg></div></header>
 <div class="diagram">
 <svg class="ducts" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="blueFlow"><stop stop-color="#008bce"/><stop offset=".5" stop-color="#24d4ff"/><stop offset="1" stop-color="#008bda"/></linearGradient><linearGradient id="greenFlow"><stop stop-color="#00a167"/><stop offset=".5" stop-color="#28f995"/><stop offset="1" stop-color="#008c54"/></linearGradient><linearGradient id="goldFlow"><stop stop-color="#d58c00"/><stop offset=".5" stop-color="#ffe763"/><stop offset="1" stop-color="#ffad00"/></linearGradient><linearGradient id="redFlow"><stop stop-color="#b52b4a"/><stop offset=".5" stop-color="#ff7d88"/><stop offset="1" stop-color="#d32b45"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="7"/></filter></defs>
-<g filter="url(#glow)" class="duct-outline"><path stroke="#13bdff" d="M240 94H335C370 94 380 135 430 135"/><path stroke="#19ef93" d="M570 135C620 135 630 94 665 94H760"/><path stroke="#ffd02b" d="M240 270H335C370 270 380 229 430 229"/><path stroke="#ff637a" d="M570 229C620 229 630 270 665 270H760"/></g>
-<g class="duct-outline"><path stroke="url(#blueFlow)" d="M240 94H335C370 94 380 135 430 135"/><path stroke="url(#greenFlow)" d="M570 135C620 135 630 94 665 94H760"/><path stroke="url(#goldFlow)" d="M240 270H335C370 270 380 229 430 229"/><path stroke="url(#redFlow)" d="M570 229C620 229 630 270 665 270H760"/></g>
-<g class="duct-inner"><path stroke="url(#blueFlow)" d="M240 94H335C370 94 380 135 430 135"/><path stroke="url(#greenFlow)" d="M570 135C620 135 630 94 665 94H760"/><path stroke="url(#goldFlow)" d="M240 270H335C370 270 380 229 430 229"/><path stroke="url(#redFlow)" d="M570 229C620 229 630 270 665 270H760"/></g>
-<path class="moving" d="M245 94H335C370 94 380 135 430 135M570 135C620 135 630 94 665 94H755M245 270H335C370 270 380 229 430 229M570 229C620 229 630 270 665 270H755"/>
+<g filter="url(#glow)" class="duct-outline"><path stroke="#13bdff" d="M240 94H335C370 94 420 135 500 135"/><path stroke="#19ef93" d="M500 135C580 135 630 94 665 94H760"/><path stroke="#ffd02b" d="M240 270H335C370 270 420 229 500 229"/><path stroke="#ff637a" d="M500 229C580 229 630 270 665 270H760"/></g>
+<g class="duct-outline"><path stroke="url(#blueFlow)" d="M240 94H335C370 94 420 135 500 135"/><path stroke="url(#greenFlow)" d="M500 135C580 135 630 94 665 94H760"/><path stroke="url(#goldFlow)" d="M240 270H335C370 270 420 229 500 229"/><path stroke="url(#redFlow)" d="M500 229C580 229 630 270 665 270H760"/></g>
+<g class="duct-inner"><path stroke="url(#blueFlow)" d="M240 94H335C370 94 420 135 500 135"/><path stroke="url(#greenFlow)" d="M500 135C580 135 630 94 665 94H760"/><path stroke="url(#goldFlow)" d="M240 270H335C370 270 420 229 500 229"/><path stroke="url(#redFlow)" d="M500 229C580 229 630 270 665 270H760"/></g>
+<path class="moving" d="M245 94H335C370 94 420 135 500 135M500 135C580 135 630 94 665 94H755M245 270H335C370 270 420 229 500 229M500 229C580 229 630 270 665 270H755"/>
 <path class="air-arrow" d="M306 94h32m-10-10 10 10-10 10M670 94h32m-10-10 10 10-10 10M306 270h32m-10-10 10 10-10 10M670 270h32m-10-10 10 10-10 10"/>
 </svg>
 <div class="air outside"><svg class="icon"><use href="#cloud"/></svg><div><div class="air-label">Außenluft</div><div class="temp"><span id="outside">—</span> <small>°C</small></div></div><svg class="icon thermometer"><use href="#thermo"/></svg></div>
@@ -97,16 +97,33 @@ let pending = null;
 let actionTimer = null;
 let actionError = '';
 let fitFrame = null;
+let fitSignature = '';
 function fitTile() {
     fitFrame = null;
     const dashboard = document.querySelector('.dashboard');
-    const width = dashboard.offsetWidth;
-    const height = Math.max(dashboard.offsetHeight, dashboard.scrollHeight);
-    if (!width || !height) return;
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
-    const scale = Math.min(1, viewportWidth / width, Math.max(0, viewportHeight - 1) / height);
-    dashboard.style.setProperty('--tile-scale', String(scale));
+    if (!viewportWidth || !viewportHeight) return;
+    const signature = () => [viewportWidth, viewportHeight, dashboard.offsetWidth, dashboard.scrollHeight].join(':');
+    if (signature() === fitSignature) return;
+    const fits = scale => {
+        dashboard.style.setProperty('--tile-scale', String(scale));
+        return Math.max(dashboard.offsetHeight, dashboard.scrollHeight) * scale <= viewportHeight - 1;
+    };
+    // Counter-expand the layout before scaling, so its visible width always fills the tile.
+    // Find the largest readable scale that also fits the available height after reflow.
+    let low = 0.0001;
+    let high = 1;
+    if (fits(1)) low = 1;
+    else {
+        for (let step = 0; step < 22; step++) {
+            const middle = (low + high) / 2;
+            if (fits(middle)) low = middle;
+            else high = middle;
+        }
+    }
+    dashboard.style.setProperty('--tile-scale', String(low));
+    fitSignature = signature();
 }
 function scheduleTileFit() {
     if (fitFrame === null) fitFrame = requestAnimationFrame(fitTile);

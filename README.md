@@ -20,7 +20,7 @@ Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enth
 
 ## Kachelgröße
 
-Das vollständige Dashboard passt sich proportional an die verfügbare Breite **und Höhe** an. Ein `ResizeObserver` erfasst Größenänderungen der Kachel und des Inhalts. Bei flachen Kacheln wird die gesamte Darstellung einschließlich Text und Bedienelementen verkleinert, sodass nichts unten abgeschnitten wird. Das Seitenverhältnis bleibt erhalten; je nach Kachelformat bleiben seitlich freie Flächen. Auch nach Datenupdates und beim Öffnen der Diagnose wird die Größe neu angepasst.
+Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die verfügbare Höhe. Vor einer nötigen Verkleinerung wird die interne Layoutbreite entsprechend erweitert; dadurch entstehen keine breiten seitlichen Leerflächen. Inhalte werden neu umgebrochen, Symbole bleiben unverzerrt. Ein `ResizeObserver` erfasst Änderungen der Kachel und des Inhalts. Auch nach Datenupdates und beim Öffnen der Diagnose wird das Layout neu eingepasst.
 
 ## Vorbelegte Quellvariablen
 
@@ -70,7 +70,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.4.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.4.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.5.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.5.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 
