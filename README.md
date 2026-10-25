@@ -28,17 +28,17 @@ Bis 30 Tage werden **stündliche Mittelwerte**, in der Jahresansicht **tägliche
 
 ## Stromwerte und Diagramme ab Version 1.8
 
-**Momentanleistung** liest die Wirkleistung von Variable **48602**, **Gesamtverbrauch** den Gesamtzählerstand von **50335**. Beide IDs können im Instanzformular geändert werden. Die Liveanzeige übernimmt `GetValueFormatted()` samt Originaleinheit, beispielsweise W und kWh. Keine Umrechnung oder Veränderung der Quellvariablen.
+**Momentanleistung** liest die Wirkleistung von Variable **48602**, **Gesamtverbrauch** den Gesamtzählerstand von **50335**. Beide IDs können im Instanzformular geändert werden. Die Liveanzeige übernimmt die Originaleinheit, beispielsweise W und kWh. Verbrauchswerte werden mit genau zwei Nachkommastellen dargestellt; die zugrunde liegenden Werte werden nicht verändert. Keine Umrechnung oder Veränderung der Quellvariablen.
 
 Auf die jeweilige Karte klicken, um den Verlauf mit der vorhandenen Zeitbereichsauswahl und Vor-/Zurück-Navigation zu öffnen. Voraussetzung ist die Protokollierung im Archive Control:
 
 - Momentanleistung: Standardaggregation; Diagramm mit stündlichen bzw. täglichen Mittelwerten in der Quelleneinheit.
-- Gesamtverbrauch bei **Zähleraggregation**: Balkendiagramm mit tatsächlichem Verbrauch je Stunde bei 24 Stunden und **je Tag ab 7 Tagen** aus den Archiv-Zählerdifferenzen. Dies sind Verbrauchsmengen, keine Gesamtzählerstände und keine Leistungswerte.
+- Gesamtverbrauch bei **Zähleraggregation**: Balkendiagramm mit tatsächlichem Verbrauch je Stunde bei 24 Stunden und **je Tag ab 7 Tagen, einschließlich 365 Tagen** aus den Archiv-Zählerdifferenzen. Dies sind Verbrauchsmengen, keine Gesamtzählerstände und keine Leistungswerte.
 - Gesamtverbrauch bei **Standardaggregation**: ab 7 Tagen täglicher, sonst stündlicher Linienverlauf der archivierten Gesamtzählerstände (Mittelwerte), ausdrücklich als Zählerstand beschriftet. Aus diesen Mittelwerten wird kein Intervallverbrauch berechnet.
 
-**Tagesverbrauch (heute)** steht zusätzlich in der Gesamtverbrauchskarte. Er zeigt den echten Tageszählerverbrauch seit 00:00 Uhr in der Symcon-Serverzeitzone bis zum aktuellen Stand. Dafür muss Variable 50335 im Archive Control als **Zähler** protokolliert werden. Ohne diese Voraussetzung oder ohne heutige Daten erscheint „—“ mit Hinweis, kein erfundener Nullwert. Der Tagesverbrauch wird bei Änderungen der Energiequelle oder spätestens nach einer Minute neu gelesen.
+**Monatsverbrauch (laufend)** steht zusätzlich in der Gesamtverbrauchskarte. Er zeigt den echten Verbrauch seit dem ersten Tag des laufenden Kalendermonats um 00:00 Uhr in der Symcon-Serverzeitzone bis zum aktuellen Stand. Dafür muss Variable 50335 im Archive Control als **Zähler** protokolliert werden. Ohne diese Voraussetzung oder ohne Daten des laufenden Monats erscheint „—“ mit Hinweis, kein erfundener Nullwert. Der Monatsverbrauch wird bei Änderungen der Energiequelle oder spätestens nach einer Minute neu gelesen.
 
-Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch Einheiten im Diagramm stammen aus dem Profil bzw. der Darstellung. Wenn keine Einheit hinterlegt ist, wird „Quelleneinheit“ gemeldet. Die Angaben im Screenshot sind Beispieldaten; auf der Anlage werden die tatsächlichen Werte geladen.
+Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch Einheiten im Diagramm stammen aus dem Profil bzw. der Darstellung. Wenn keine Einheit hinterlegt ist, wird „Quelleneinheit“ gemeldet. Gesamtverbrauch, Monatsverbrauch sowie Werte und Tooltips im Verbrauchsdiagramm haben genau **zwei Nachkommastellen**. Die Angaben im Screenshot sind Beispieldaten; auf der Anlage werden die tatsächlichen Werte geladen.
 
 ## Kachelgröße
 
@@ -94,7 +94,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.9.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.9.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.10.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.10.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.10 · Build 11 · 2026-10-25
+
+- Tagesauflösung des Verbrauchsgraphen ab 7 Tagen und ausdrücklich auch bei 365 Tagen durch zusätzliche Prüfungen abgesichert.
+- Gesamtverbrauch, Zusatzverbrauch und Verbrauchsgraph-Achsen/Tooltips auf genau zwei Nachkommastellen formatiert; Daten bleiben unverändert.
+- „Tagesverbrauch (heute)“ durch „Monatsverbrauch (laufend)“ ersetzt. Aktuelles Monatszähleraggregat ab Kalendermonatsbeginn mit Serverzeitzone verwenden.
+
 ## 1.9 · Build 10 · 2026-10-25
 
 - Gesamtverbrauchsgraph ab 7 Tagen auf tägliche Archivwerte umgestellt; 24 Stunden bleiben stündlich.

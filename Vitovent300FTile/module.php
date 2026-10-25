@@ -31,7 +31,7 @@ class Vitovent300FTile extends IPSModule
     {
         parent::ApplyChanges();
         $this->SetBuffer('ActionError', '');
-        $this->SetBuffer('DailyEnergyCache', '');
+        $this->SetBuffer('MonthlyEnergyCache', '');
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
         // Only remove subscriptions owned by this module; retain the kernel subscription.
         foreach ($this->GetMessageList() as $sender => $messages) {
@@ -231,12 +231,12 @@ class Vitovent300FTile extends IPSModule
         $this->UpdateVisualizationValue($this->encode(['history' => $reply]));
     }
 
-    private function dailyConsumption(array $energy): array
+    private function monthlyConsumption(array $energy): array
     {
-        $start = strtotime('today');
+        $start = strtotime('first day of this month 00:00:00');
         $now = time();
         $key = $this->ReadPropertyInteger('EnergyID') . ':' . $start . ':' . ($energy['updated'] ?? 0) . ':' . ($energy['value'] ?? '') . ':' . ($energy['unit'] ?? '');
-        $cache = json_decode($this->GetBuffer('DailyEnergyCache'), true);
+        $cache = json_decode($this->GetBuffer('MonthlyEnergyCache'), true);
         if (is_array($cache) && ($cache['key'] ?? '') === $key && $now - ($cache['time'] ?? 0) < 60) {
             return $cache['data'];
         }
@@ -252,22 +252,22 @@ class Vitovent300FTile extends IPSModule
                 if (AC_GetLoggingStatus($candidate, $id)) { $archive = $candidate; break; }
             }
             if (!$archive) {
-                throw new RuntimeException('Tagesverbrauch benötigt eine aktive Archivprotokollierung.');
+                throw new RuntimeException('Monatsverbrauch benötigt eine aktive Archivprotokollierung.');
             }
             if (AC_GetAggregationType($archive, $id) !== 1) {
-                throw new RuntimeException('Tagesverbrauch benötigt Zähleraggregation im Archive Control; Zählerstands-Mittelwerte sind kein Tagesverbrauch.');
+                throw new RuntimeException('Monatsverbrauch benötigt Zähleraggregation im Archive Control; Zählerstands-Mittelwerte sind kein Monatsverbrauch.');
             }
-            foreach (AC_GetAggregatedValues($archive, $id, 1, $start, $now, 2) as $row) {
+            foreach (AC_GetAggregatedValues($archive, $id, 3, $start, $now, 2) as $row) {
                 if ((int) $row['TimeStamp'] === $start && (is_int($row['Avg']) || is_float($row['Avg'])) && is_finite((float) $row['Avg'])) {
                     $result['value'] = $row['Avg'];
                     break;
                 }
             }
             if ($result['value'] === null) {
-                throw new RuntimeException('Heute noch keine archivierten Verbrauchswerte verfügbar.');
+                throw new RuntimeException('Für diesen Monat noch keine archivierten Verbrauchswerte verfügbar.');
             }
         } catch (Throwable $e) { $result['reason'] = $e->getMessage(); }
-        $this->SetBuffer('DailyEnergyCache', $this->encode(['key' => $key, 'time' => $now, 'data' => $result]));
+        $this->SetBuffer('MonthlyEnergyCache', $this->encode(['key' => $key, 'time' => $now, 'data' => $result]));
         return $result;
     }
 
@@ -379,7 +379,11 @@ class Vitovent300FTile extends IPSModule
                         $presentation = $this->presentation($id);
                         $min = $profile !== null ? $profile['MinValue'] : ($presentation['MIN'] ?? null);
                         $max = $profile !== null ? $profile['MaxValue'] : ($presentation['MAX'] ?? null);
-                        $entry = ['id' => $id, 'value' => $value, 'formatted' => GetValueFormatted($id),
+                        $formatted = GetValueFormatted($id);
+                        if ($key === 'energy') {
+                            $formatted = ($profile['Prefix'] ?? $presentation['PREFIX'] ?? '') . number_format((float) $value, 2, ',', '.') . ($profile['Suffix'] ?? $presentation['SUFFIX'] ?? '');
+                        }
+                        $entry = ['id' => $id, 'value' => $value, 'formatted' => $formatted,
                             'updated' => (int) $variable['VariableUpdated'],
                             'unit' => trim($profile['Suffix'] ?? $presentation['SUFFIX'] ?? ''),
                             'hasUnit' => $profile !== null ? (trim($profile['Prefix']) !== '' || trim($profile['Suffix']) !== '') :
@@ -396,7 +400,7 @@ class Vitovent300FTile extends IPSModule
                 $data['missing'][] = $source[2];
             }
         }
-        $data['dailyEnergy'] = $this->dailyConsumption($data['values']['energy']);
+        $data['monthlyEnergy'] = $this->monthlyConsumption($data['values']['energy']);
         try {
             $data['mode'] = $this->modeConfiguration();
         } catch (Throwable $e) {

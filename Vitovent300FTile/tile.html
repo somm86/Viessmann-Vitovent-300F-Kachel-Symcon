@@ -57,7 +57,7 @@ html,body{width:100%;height:100%;overflow:hidden}
 .history-hint{font-size:10px;color:#80b6d6;margin-top:10px}
 .power-metrics .metric:focus-visible{outline:2px solid #d5f3ff;outline-offset:3px}
 @media(max-width:600px){.power-metrics{gap:12px;margin-top:12px}.power-metrics .metric{padding:14px 12px}.power-metrics .metric-heading{flex-wrap:wrap}}
-.daily-energy{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;border-top:1px solid #274157;padding-top:10px;margin-top:12px;color:#b5c7df;font-size:12px}.daily-energy strong{font-size:clamp(17px,4cqi,24px);font-weight:600;color:#c9b6ff}
+.monthly-energy{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;border-top:1px solid #274157;padding-top:10px;margin-top:12px;color:#b5c7df;font-size:12px}.monthly-energy strong{font-size:clamp(17px,4cqi,24px);font-weight:600;color:#c9b6ff}
 </style>
 </head>
 <body>
@@ -109,7 +109,7 @@ html,body{width:100%;height:100%;overflow:hidden}
 <article class="surface metric mode-panel"><div class="mode-heading"><svg class="icon"><use href="#fan"/></svg><h2>Betriebsart Lüftung</h2></div><div class="mode-buttons" id="modeButtons" role="group" aria-label="Betriebsart wählen"><div class="mode-empty">Auswahl wird geladen …</div></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p><button class="diagnosis" id="diagnosis" type="button" aria-expanded="false" aria-controls="diagnosticOutput">Diagnose anzeigen</button><pre class="diagnostic-output" id="diagnosticOutput" hidden></pre></article>
 </section><section class="power-metrics" aria-label="Stromverbrauch der Lüftung">
 <article class="surface metric power-panel" data-history="power"><div class="metric-heading"><svg class="icon metric-icon"><use href="#bolt"/></svg><div><h2>Momentanleistung</h2><div class="metric-value" id="power">—</div><div class="metric-note" id="powerNote">Einheit aus Quellprofil</div></div></div><div class="history-hint">Verlauf öffnen</div></article>
-<article class="surface metric energy-panel" data-history="energy"><div class="metric-heading"><svg class="icon metric-icon"><use href="#energy-icon"/></svg><div><h2>Gesamtverbrauch</h2><div class="metric-value" id="energy">—</div><div class="metric-note" id="energyNote">Einheit aus Quellprofil</div></div></div><div class="daily-energy"><span>Tagesverbrauch (heute)</span><strong id="dailyEnergy">—</strong></div><div class="metric-note" id="dailyEnergyNote"></div><div class="history-hint">Verlauf öffnen</div></article>
+<article class="surface metric energy-panel" data-history="energy"><div class="metric-heading"><svg class="icon metric-icon"><use href="#energy-icon"/></svg><div><h2>Gesamtverbrauch</h2><div class="metric-value" id="energy">—</div><div class="metric-note" id="energyNote">Einheit aus Quellprofil</div></div></div><div class="monthly-energy"><span>Monatsverbrauch (laufend)</span><strong id="monthlyEnergy">—</strong></div><div class="metric-note" id="monthlyEnergyNote"></div><div class="history-hint">Verlauf öffnen</div></article>
 </section>
 <footer class="footer"><span id="sourceState">Vorhandene Symcon-Variablen</span><span id="updated">Noch keine Aktualisierung</span></footer>
 </main>
@@ -205,9 +205,9 @@ function render(data) {
         byId(key).textContent = entry.formatted;
         byId(key + 'Note').textContent = entry.value === null ? 'Quellvariable nicht verfügbar' : entry.hasUnit ? 'Originalwert aus IP-Symcon' : 'Quellprofil ohne Einheit';
     }
-    const daily = data.dailyEnergy || {value: null, reason: 'Tagesverbrauch noch nicht verfügbar.'};
-    byId('dailyEnergy').textContent = daily.value === null ? '—' : Number(daily.value).toLocaleString('de-DE', {maximumFractionDigits: 4}) + (daily.unit ? ' ' + daily.unit : '');
-    byId('dailyEnergyNote').textContent = daily.reason || 'Seit 00:00 Uhr · laufender Tag (' + (daily.timezone || 'Symcon-Serverzeit') + ')';
+    const monthly = data.monthlyEnergy || {value: null, reason: 'Monatsverbrauch noch nicht verfügbar.'};
+    byId('monthlyEnergy').textContent = monthly.value === null ? '—' : Number(monthly.value).toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (monthly.unit ? ' ' + monthly.unit : '');
+    byId('monthlyEnergyNote').textContent = monthly.reason || 'Seit Monatsbeginn · laufender Monat (' + (monthly.timezone || 'Symcon-Serverzeit') + ')';
     byId('headerMode').textContent = data.values.mode.formatted;
     byId('availability').dataset.complete = String(data.missing.length === 0);
     byId('status').textContent = data.missing.length ? 'Daten unvollständig' : 'Betriebsart';
@@ -391,7 +391,7 @@ function drawHistory(points, data) {
 
     const y = value => height - 40 - (value - min) / (max - min) * (height - 60);
     const color = historyColors[historyKey];
-    const formatValue = value => Number(value).toLocaleString('de-DE', {maximumFractionDigits: historyKey === 'energy' ? 4 : historyKey === 'power' ? 2 : 1});
+    const formatValue = value => Number(value).toLocaleString('de-DE', {minimumFractionDigits: historyKey === 'energy' ? 2 : 0, maximumFractionDigits: historyKey === 'energy' || historyKey === 'power' ? 2 : 1});
     const unit = data.unit || (['power', 'energy'].includes(historyKey) ? '' : '°C');
     const labelLength = Math.max(...Array.from({length: 5}, (_, i) => (formatValue(min + (max - min) * i / 4) + ' ' + unit).length));
     const left = Math.min(width * .45, Math.max(55, labelLength * 8 + 12));
