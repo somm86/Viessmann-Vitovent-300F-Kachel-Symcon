@@ -38,3 +38,17 @@ Weitere geprüfte Referenzen:
 - [Offizielles Beispiel symcon/Strompreis: PHP](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.php) und [HTML](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.html): JSON-Nachrichten und Tile-Methoden.
 
 Der tatsächliche Frontend-Transport und die Gerätewirkung müssen weiterhin auf der Symcon-Anlage geprüft werden. Die lokalen Browserprüfungen simulieren die dokumentierte Bridge.
+
+## Temperaturverlauf ab 1.6
+
+`requestAction('LoadHistory', JSON-Text)` sendet nur einen festen Quellschlüssel, Unix-Start/-Endzeit und eine Anfragekennung. Der Server bestimmt die tatsächliche ID aus der Instanzkonfiguration. Andere Quellschlüssel als die vier Temperaturen, ungültige Zeitstempel, Zukunftsbereiche und Fenster über 366 Tage werden abgewiesen. Eine kleine Zeitabweichung des Clients von bis zu fünf Minuten wird toleriert. Payload maximal 512 Bytes; Rückgabe maximal 1000 Datensätze. Innerhalb der zulässigen Fenster umfasst die gewählte Aggregationsstufe höchstens etwa 745 stündliche bzw. 367 tägliche Datensätze.
+
+`IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')` sucht vorhandene Archive. `AC_GetLoggingStatus()` und `AC_GetAggregationType()` prüfen aktive Standardprotokollierung. `AC_GetAggregatedValues()` liest Stufe 0 (stündlich) bis einschließlich 31 Tage, darüber Stufe 1 (täglich). Verwendet werden ausschließlich echte `TimeStamp`-/`Avg`-Werte. Es gibt weder `AC_SetLoggingStatus()` noch `SetValue()` im Produktionspfad.
+
+Die Antwort kommt separat als `{"history": {...}}` über `UpdateVisualizationValue()`; reguläre Live-Snapshots und Aktionsfehler bleiben erhalten. Die Kachel ordnet Antworten über Quellschlüssel, Quell-ID und Anfragekennung zu und ignoriert verspätete Antworten. Bei einem Wechsel der Quelle oder Schließen/sofortigem Wiederöffnen wird keine ältere Anfrage als aktuelle angezeigt. Der Diagrammdialog liegt außerhalb des transformierten Dashboards. SVG-Achsen werden passend zur Dialoggröße erzeugt; Datenlücken über die erwartete Aggregationsdauer werden nicht durch Linien verbunden.
+
+Direkt gelesene offizielle Referenzen:
+
+- [AC_GetAggregatedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getaggregatedvalues/): Stufen, Limit, absteigende Rückgabereihenfolge, `TimeStamp`, `Avg` und Aggregationszeiträume.
+- [AC_GetLoggedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/): Empfehlungen zur Verwendung vorhandener Aggregate statt belastender Rohdatenabfragen. Die Kachel verwendet deshalb Aggregatdaten.
+- [HTML-SDK openObject](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/openobject/): öffnet eine maximierte Objektkachel ab 8.2, garantiert jedoch kein spezifisches Temperaturdiagramm samt gewünschter Navigation. Daher wird ein eigener, nur lesender Diagrammdialog umgesetzt.

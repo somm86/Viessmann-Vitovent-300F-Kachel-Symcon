@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.6 · Build 7 · 2026-10-25
+
+- Vier Temperaturkarten anklickbar und per Tastatur bedienbar; öffnen ein eigenes Diagramm im Dialog.
+- 24 Stunden, 7 Tage, 30 Tage und 365 Tage mit vorigem/nächstem Zeitfenster und „Jetzt“.
+- Vorhandene Archive-Control-Daten über die offiziellen APIs lesen, stündliche bzw. tägliche Mittelwerte. Keine Änderung von Archivkonfiguration oder Messwerten.
+- Fehlendes Archiv, deaktivierte Protokollierung, falsche Zähleraggregation, leere Bereiche, Timeout und verspätete Antworten behandeln.
+- Diagramm außerhalb des skalierten Dashboards, auch in kleinen Kacheln passend; getrennte Live-/Verlaufsnachrichten und Schutz vor beliebigen Variablenabfragen.
+
 ## 1.5 · Build 6 · 2026-10-25
 
 - Seitliche Leerflächen der Höhenanpassung beseitigt: interne Breite vor der Skalierung erweitern und Inhalte neu umbrechen, sodass die sichtbare Kachelbreite vollständig genutzt wird.

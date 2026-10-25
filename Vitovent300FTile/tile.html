@@ -37,6 +37,19 @@
 html,body{width:100%;height:100%;overflow:hidden}
 .dashboard{position:absolute;top:0;left:50%;width:calc(100% / var(--tile-scale,1));max-width:none;margin:0;transform-origin:top center;transform:translateX(-50%) scale(var(--tile-scale,1))}
 .diagnostic-output{max-height:min(25vh,180px);overflow:auto}
+
+.air[role="button"]{cursor:pointer}
+.air[role="button"]:focus-visible{outline:2px solid #d5f3ff;outline-offset:3px}
+.history-dialog{width:min(1100px,calc(100vw - 20px));max-width:none;max-height:calc(100dvh - 20px);padding:22px;color:var(--text);background:#081c2c;border:1px solid #285f81;border-radius:16px;box-shadow:0 25px 80px #000b;overflow:auto}
+.history-dialog::backdrop{background:#020911bf;backdrop-filter:blur(4px)}
+.history-header,.history-toolbar,.history-navigation{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.history-dialog h2{margin:0 0 4px}.history-toolbar{margin-top:20px}.history-toolbar label{color:#b1d2e8;font-size:13px;display:flex;gap:10px;align-items:center}
+.history-dialog button,.history-dialog select{border:1px solid #35617e;border-radius:7px;background:#102f46;color:#e6f4ff;font:inherit;font-size:13px;padding:9px 12px;cursor:pointer}
+.history-dialog button:disabled,.history-dialog select:disabled{opacity:.45;cursor:default}
+.history-dialog button:focus-visible,.history-dialog select:focus-visible{outline:2px solid #51cfff;outline-offset:2px}
+.history-window{font-size:12px;color:#92bcd8}.history-status{color:#dbd0ad;font-size:13px}.history-chart{display:block;width:100%;height:clamp(180px,45vh,390px)}.history-chart[hidden]{display:none}
+.history-point{opacity:.5}.history-point:hover{opacity:1;r:5}
+@media(max-width:500px){.history-dialog{padding:14px}.history-dialog h2{font-size:17px}.history-navigation{width:100%}.history-dialog button{padding:9px}.history-toolbar{gap:10px}}
 </style>
 </head>
 <body>
@@ -88,6 +101,15 @@ html,body{width:100%;height:100%;overflow:hidden}
 <article class="surface metric mode-panel"><div class="mode-heading"><svg class="icon"><use href="#fan"/></svg><h2>Betriebsart Lüftung</h2></div><div class="mode-buttons" id="modeButtons" role="group" aria-label="Betriebsart wählen"><div class="mode-empty">Auswahl wird geladen …</div></div><div class="current-mode"><svg class="icon"><use href="#info"/></svg><div><div class="metric-note">Aktuelle Betriebsart</div><div class="mode-value" id="modeLabel">—</div></div></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p><button class="diagnosis" id="diagnosis" type="button" aria-expanded="false" aria-controls="diagnosticOutput">Diagnose anzeigen</button><pre class="diagnostic-output" id="diagnosticOutput" hidden></pre></article>
 </section><footer class="footer"><span id="sourceState">Vorhandene Symcon-Variablen</span><span id="updated">Noch keine Aktualisierung</span></footer>
 </main>
+<dialog id="historyDialog" class="history-dialog" aria-labelledby="historyTitle">
+<div class="history-header"><div><h2 id="historyTitle">Temperaturverlauf</h2><span class="metric-note">Archivierte Temperatur · °C</span></div><button type="button" id="historyClose" aria-label="Diagramm schließen">✕</button></div>
+<div class="history-toolbar"><label for="historyRange">Zeitraum <select id="historyRange"><option value="86400">24 Stunden</option><option value="604800">7 Tage</option><option value="2592000">30 Tage</option><option value="31536000">365 Tage</option></select></label><div class="history-navigation"><button type="button" id="historyPrevious" aria-label="Vorheriger Zeitraum">← Zurück</button><button type="button" id="historyNow">Jetzt</button><button type="button" id="historyNext" aria-label="Nächster Zeitraum">Weiter →</button></div></div>
+<p id="historyWindow" class="history-window"></p>
+<p id="historyStatus" class="history-status" role="status" aria-live="polite"></p>
+<svg id="historyChart" class="history-chart" viewBox="0 0 1000 360" role="img" aria-label="Temperaturverlauf in Grad Celsius" hidden></svg>
+<p id="historyDetail" class="metric-note"></p>
+</dialog>
+
 <script>
 'use strict';
 const INITIAL = /*__INITIAL_DATA__*/null;
@@ -211,7 +233,11 @@ function render(data) {
     byId('diagnosticOutput').textContent = JSON.stringify({variableID: data.mode.variableID, source: data.mode.source, type: data.mode.type, actionID: data.mode.actionID, writable: data.mode.writable, choices: data.mode.choices, reason: data.mode.reason}, null, 2);
 }
 function handleMessage(message) {
-    try { render(typeof message === 'string' ? JSON.parse(message) : message); }
+    try {
+        const data = typeof message === 'string' ? JSON.parse(message) : message;
+        if (data && data.history) receiveHistory(data.history);
+        else render(data);
+    }
     catch (error) { byId('feedback').textContent = 'Datenaktualisierung konnte nicht gelesen werden.'; }
 }
 function finishPending(error) {
@@ -247,6 +273,152 @@ byId('diagnosis').addEventListener('click', () => {
     byId('diagnosis').setAttribute('aria-expanded', String(!output.hidden));
     byId('diagnosis').textContent = output.hidden ? 'Diagnose anzeigen' : 'Diagnose ausblenden';
 });
+const historyDialog = byId('historyDialog');
+let historyKey = null;
+let historyEnd = null;
+let historyBusy = false;
+let historyId = '';
+let historyCounter = 0;
+let historyTimer = null;
+let historyPlot = null;
+const temperatureNames = {outside: 'Außenluft', supply: 'Zuluft', extract: 'Abluft', exhaust: 'Fortluft'};
+const temperatureColors = {outside: '#18bcff', supply: '#27eda1', extract: '#ffd34d', exhaust: '#ff6878'};
+function historyDuration() { return Number(byId('historyRange').value); }
+function historyControls() {
+    byId('historyRange').disabled = historyBusy;
+    byId('historyPrevious').disabled = historyBusy || historyEnd - historyDuration() * 2 < 0;
+    byId('historyNow').disabled = historyBusy;
+    byId('historyNext').disabled = historyBusy || historyEnd >= Math.floor(Date.now() / 1000) - 2;
+}
+function openHistory(key) {
+    if (!current || !current.values[key] || current.values[key].value === null) return;
+    historyKey = key;
+    historyEnd = Math.floor(Date.now() / 1000);
+    byId('historyTitle').textContent = temperatureNames[key] + ' · Temperaturverlauf';
+    if (!historyDialog.open) historyDialog.showModal();
+    loadHistory();
+}
+function loadHistory() {
+    clearTimeout(historyTimer);
+    historyPlot = null;
+    const start = historyEnd - historyDuration();
+    byId('historyWindow').textContent = new Date(start * 1000).toLocaleString('de-DE') + ' – ' + new Date(historyEnd * 1000).toLocaleString('de-DE');
+    byId('historyChart').setAttribute('hidden', '');
+    byId('historyDetail').textContent = '';
+    if (typeof requestAction !== 'function') {
+        historyBusy = false;
+        historyControls();
+        byId('historyStatus').textContent = 'Temperaturverlauf nur innerhalb der Symcon-Kachel verfügbar.';
+        return;
+    }
+    historyId = 'history_' + Date.now() + '_' + (++historyCounter);
+    historyBusy = true;
+    historyControls();
+    byId('historyStatus').textContent = 'Lade Archivwerte …';
+    const requestedId = historyId;
+    historyTimer = setTimeout(() => historyFailed('Keine Antwort vom Archiv. Bitte Verbindung und Archive Control prüfen.', requestedId), 15000);
+    try {
+        const result = requestAction('LoadHistory', JSON.stringify({key: historyKey, start, end: historyEnd, requestId: historyId}));
+        if (result && typeof result.catch === 'function') result.catch(() => historyFailed('Archivabfrage fehlgeschlagen.', requestedId));
+    } catch (error) { historyFailed('Archivabfrage fehlgeschlagen.', requestedId); }
+}
+function historyFailed(message, id) {
+    if (id !== historyId || !historyDialog.open) return;
+    clearTimeout(historyTimer);
+    historyBusy = false;
+    historyControls();
+    byId('historyChart').setAttribute('hidden', '');
+    byId('historyStatus').textContent = message;
+}
+function receiveHistory(data) {
+    if (!historyDialog.open || data.requestId !== historyId || data.key !== historyKey) return;
+    if (data.variableID && current.values[historyKey].id !== data.variableID) return;
+    clearTimeout(historyTimer);
+    historyBusy = false;
+    historyControls();
+    if (data.error) { historyFailed(data.error, historyId); return; }
+    const points = Array.isArray(data.points) ? data.points.filter(p => Number.isFinite(p.time) && Number.isFinite(p.value)) : [];
+    if (!points.length) {
+        byId('historyStatus').textContent = 'Keine archivierten Werte in diesem Zeitraum. Bitte einen anderen Zeitraum wählen oder die Protokollierung prüfen.';
+        byId('historyChart').setAttribute('hidden', '');
+        return;
+    }
+    byId('historyStatus').textContent = '';
+    byId('historyDetail').textContent = (data.aggregation || '') + ' · ' + points.length + ' Messpunkte · Zeitangaben in deiner Browser-Zeitzone. Lücken bleiben sichtbar.';
+    historyPlot = {points, data};
+    drawHistory(points, data);
+}
+function chartElement(tag, attributes, text) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+    if (text !== undefined) element.textContent = text;
+    return element;
+}
+function drawHistory(points, data) {
+    const chart = byId('historyChart');
+    chart.replaceChildren();
+    chart.removeAttribute('hidden');
+    const width = Math.max(240, Math.min(1000, chart.clientWidth));
+    const height = Math.max(180, Math.min(360, chart.clientHeight));
+    chart.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    const lowest = points.reduce((min, p) => Math.min(min, p.value), Infinity);
+    const highest = points.reduce((max, p) => Math.max(max, p.value), -Infinity);
+    const padding = Math.max(.5, (highest - lowest) * .12);
+    const min = lowest - padding;
+    const max = highest + padding;
+    const x = time => 55 + (time - data.start) / (data.end - data.start) * (width - 70);
+    const y = value => height - 40 - (value - min) / (max - min) * (height - 60);
+    const color = temperatureColors[historyKey];
+    for (let i = 0; i <= 4; i++) {
+        const value = min + (max - min) * i / 4;
+        chart.appendChild(chartElement('line', {x1: 55, x2: width - 15, y1: y(value), y2: y(value), stroke: '#24435b'}));
+        chart.appendChild(chartElement('text', {x: 45, y: y(value) + 4, 'text-anchor': 'end', fill: '#a5c8df', 'font-size': 12}, number(value) + '°'));
+        if (width < 500 && i % 2 !== 0) continue;
+        const timestamp = data.start + (data.end - data.start) * i / 4;
+        const date = new Date(timestamp * 1000);
+        const label = data.end - data.start <= 86400 ? date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}) : date.toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'});
+        chart.appendChild(chartElement('text', {x: x(timestamp), y: height - 12, 'text-anchor': i === 4 ? 'end' : i === 0 ? 'start' : 'middle', fill: '#a5c8df', 'font-size': 12}, label));
+    }
+    let previous = null;
+    const path = points.map(p => {
+        const command = previous === null || p.time - previous > data.step * 1.8 ? 'M' : 'L';
+        previous = p.time;
+        return command + x(p.time).toFixed(2) + ',' + y(p.value).toFixed(2);
+    }).join(' ');
+    chart.appendChild(chartElement('path', {d: path, fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round'}));
+    for (const point of points) {
+        const dot = chartElement('circle', {cx: x(point.time), cy: y(point.value), r: 3, fill: color, class: 'history-point'});
+        dot.appendChild(chartElement('title', {}, new Date(point.time * 1000).toLocaleString('de-DE') + ': ' + number(point.value) + ' °C'));
+        chart.appendChild(dot);
+    }
+    chart.removeAttribute('hidden');
+}
+for (const [key, name] of Object.entries(temperatureNames)) {
+    const card = document.querySelector('.air.' + key);
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-haspopup', 'dialog');
+    card.setAttribute('aria-label', name + ': Temperaturverlauf öffnen');
+    card.setAttribute('title', 'Temperaturverlauf öffnen');
+    card.addEventListener('click', () => openHistory(key));
+    card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openHistory(key); }
+    });
+}
+byId('historyClose').addEventListener('click', () => historyDialog.close());
+historyDialog.addEventListener('close', () => {
+    // A queued close event from the previous dialog must not cancel a newly opened query.
+    if (historyDialog.open) return;
+    clearTimeout(historyTimer); historyId = ''; historyBusy = false;
+});
+byId('historyRange').addEventListener('change', loadHistory);
+byId('historyPrevious').addEventListener('click', () => { historyEnd -= historyDuration(); loadHistory(); });
+byId('historyNext').addEventListener('click', () => { historyEnd = Math.min(Math.floor(Date.now() / 1000), historyEnd + historyDuration()); loadHistory(); });
+byId('historyNow').addEventListener('click', () => { historyEnd = Math.floor(Date.now() / 1000); loadHistory(); });
+window.addEventListener('resize', () => {
+    if (historyDialog.open && historyPlot) drawHistory(historyPlot.points, historyPlot.data);
+});
+
 const tileObserver = new ResizeObserver(scheduleTileFit);
 tileObserver.observe(document.querySelector('.dashboard'));
 tileObserver.observe(document.documentElement);

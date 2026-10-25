@@ -100,6 +100,10 @@ class Vitovent300FTile extends IPSModule
 
     public function RequestAction($ident, $value)
     {
+        if ($ident === 'LoadHistory') {
+            $this->loadHistory($value);
+            return;
+        }
         $this->SetBuffer('ActionError', '');
         try {
             if ($ident !== 'ChangeMode') {
@@ -140,6 +144,73 @@ class Vitovent300FTile extends IPSModule
     public function GetDiagnostics(): string
     {
         return $this->encode($this->modeConfiguration());
+    }
+
+    private function loadHistory($value)
+    {
+        $reply = ['requestId' => '', 'key' => '', 'points' => [], 'error' => ''];
+        try {
+            if (!is_string($value) || strlen($value) > 512) {
+                throw new InvalidArgumentException('Ungültige Verlaufsanfrage.');
+            }
+            $request = json_decode($value, true, 32, JSON_THROW_ON_ERROR);
+            if (!is_array($request) || !is_string($request['requestId'] ?? null) ||
+                !preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $request['requestId'])) {
+                throw new InvalidArgumentException('Ungültige Anfragekennung.');
+            }
+            $reply['requestId'] = $request['requestId'];
+            $key = $request['key'] ?? '';
+            if (!is_string($key) || !in_array($key, ['outside', 'supply', 'extract', 'exhaust'], true)) {
+                throw new InvalidArgumentException('Verlauf nur für die vier Temperaturquellen verfügbar.');
+            }
+            $reply['key'] = $key;
+            $start = $request['start'] ?? null;
+            $end = $request['end'] ?? null;
+            if (!is_int($start) || !is_int($end) || $start < 0 || $end <= $start ||
+                $end > time() + 300 || $end - $start > 366 * 86400) {
+                throw new InvalidArgumentException('Ungültiger Zeitraum (maximal 366 Tage, keine Zukunft).');
+            }
+            if (IPS_GetKernelRunlevel() !== KR_READY) {
+                throw new RuntimeException('IP-Symcon ist noch nicht bereit.');
+            }
+            $id = $this->ReadPropertyInteger(self::SOURCES[$key][0]);
+            if ($id <= 0 || !IPS_VariableExists($id) || !in_array(IPS_GetVariable($id)['VariableType'], [1, 2], true)) {
+                throw new RuntimeException('Temperaturvariable nicht verfügbar.');
+            }
+            $reply['variableID'] = $id;
+            $archive = 0;
+            foreach (IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}') as $candidate) {
+                if (AC_GetLoggingStatus($candidate, $id)) {
+                    $archive = $candidate;
+                    break;
+                }
+            }
+            if ($archive === 0) {
+                throw new RuntimeException('Für diese Temperatur ist keine Archivprotokollierung aktiv. Bitte die Protokollierung im Archive Control prüfen.');
+            }
+            if (AC_GetAggregationType($archive, $id) !== 0) {
+                throw new RuntimeException('Die Temperatur muss im Archiv als Standardwert statt als Zähler protokolliert werden.');
+            }
+            $level = $end - $start > 31 * 86400 ? 1 : 0;
+            $reply['aggregation'] = $level === 0 ? 'Stündliche Mittelwerte' : 'Tägliche Mittelwerte';
+            $reply['step'] = $level === 0 ? 3600 : 86400;
+            $reply['start'] = $start;
+            $reply['end'] = $end;
+            $rows = AC_GetAggregatedValues($archive, $id, $level, $start, $end, 1000);
+            foreach ($rows as $row) {
+                $timestamp = $row['TimeStamp'];
+                $temperature = $row['Avg'];
+                if ($timestamp >= $start && $timestamp <= $end &&
+                    (is_int($temperature) || is_float($temperature)) && is_finite((float) $temperature)) {
+                    $reply['points'][] = ['time' => (int) $timestamp, 'value' => $temperature];
+                }
+            }
+            usort($reply['points'], function ($a, $b) { return $a['time'] <=> $b['time']; });
+        } catch (Throwable $e) {
+            $reply['error'] = $e->getMessage();
+        }
+        // Independent response: do not overwrite live data or operating-mode errors.
+        $this->UpdateVisualizationValue($this->encode(['history' => $reply]));
     }
 
     private function sourceMessages(): array
@@ -239,7 +310,7 @@ class Vitovent300FTile extends IPSModule
         $data = ['values' => [], 'missing' => [], 'actionError' => $this->GetBuffer('ActionError')];
         foreach (self::SOURCES as $key => $source) {
             $id = $this->ReadPropertyInteger($source[0]);
-            $entry = ['value' => null, 'formatted' => '—', 'updated' => 0, 'hasUnit' => false];
+            $entry = ['id' => $id, 'value' => null, 'formatted' => '—', 'updated' => 0, 'hasUnit' => false];
             try {
                 if ($id > 0 && IPS_VariableExists($id)) {
                     $variable = IPS_GetVariable($id);
@@ -250,7 +321,7 @@ class Vitovent300FTile extends IPSModule
                         $presentation = $this->presentation($id);
                         $min = $profile !== null ? $profile['MinValue'] : ($presentation['MIN'] ?? null);
                         $max = $profile !== null ? $profile['MaxValue'] : ($presentation['MAX'] ?? null);
-                        $entry = ['value' => $value, 'formatted' => GetValueFormatted($id),
+                        $entry = ['id' => $id, 'value' => $value, 'formatted' => GetValueFormatted($id),
                             'updated' => (int) $variable['VariableUpdated'],
                             'hasUnit' => $profile !== null ? (trim($profile['Prefix']) !== '' || trim($profile['Suffix']) !== '') :
                                 (trim($presentation['PREFIX'] ?? '') !== '' || trim($presentation['SUFFIX'] ?? '') !== ''),

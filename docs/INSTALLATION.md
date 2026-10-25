@@ -14,7 +14,7 @@ In Module Control die Repository-URL hinzufügen, veröffentlichten Branch ausw�
 
 ## Lokal mit dem ZIP
 
-1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.5.zip.sha256`).
+1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.6.zip.sha256`).
 2. Auf dem Symcon-Server das Datenverzeichnis ermitteln. Es lässt sich im Skripteditor mit `echo IPS_GetKernelDir();` anzeigen. Typisch unter Linux `/var/lib/symcon/`; bei Containern zählt das Verzeichnis **im Container**. Unter Windows den tatsächlichen Datenpfad verwenden.
 3. Den entpackten Ordner nach `<Datenverzeichnis>/modules/Vitovent300F_Kachel/` kopieren. Beispiel: `/var/lib/symcon/modules/Vitovent300F_Kachel/library.json`. Keine zusätzliche gleichnamige Ordnerebene einfügen. Lesezugriff für den Symcon-Dienst sicherstellen.
 4. Den IP-Symcon-Dienst über die vorhandene Dienst-/Containerverwaltung neu starten. Vorher eigene Konfiguration sichern. Keine zweite Kopie derselben Bibliothek installieren.
@@ -50,3 +50,11 @@ Profilassoziationen geben die erlaubten Werte dieser Integration an, nicht autom
 - **Kein Betriebsartmenü:** wirksames Profil mit Assoziationen bzw. die Darstellung „Aufzählung“ mit `OPTIONS` und die wirksame Aktion prüfen. Die neue Darstellung wird ab Version 1.2 direkt ausgelesen. Andere Darstellungen ohne ausdrücklich hinterlegte Auswahlwerte werden nicht in Schaltwerte umgedeutet. Die Diagnose zeigt die verwendete Quelle und Werte.
 - **Kein Quellwert nach Schalten:** Aktionsskript/Quellinstanz und deren Log prüfen. Das Kachelmodul schreibt den Quellwert absichtlich nicht selbst. Ein gleichbleibender oder nur lokal gesetzter Quellwert bestätigt keine Gerätewirkung.
 - **Statische HTML-Datei lässt sich nicht schalten:** erwartet; der SDK-Bridge steht in der echten Kachelvisualisierung bereit. Kein WebHook, zusätzlicher HTTP-Port oder Zugangsschlüssel nötig.
+
+## Temperaturdiagramme
+
+Nach dem Update auf 1.6 die Instanz übernehmen und die Kachel neu öffnen. Jede der vier Temperaturkarten öffnet per Klick ihren Verlauf. Oben den Zeitraum auswählen; die Pfeile blättern um genau diesen Zeitraum. „Jetzt“ öffnet das aktuelle rollende Zeitfenster. Die Fenster sind feste Dauern in Sekunden (24 Stunden / 7 / 30 / 365 Tage), keine kalendarischen Monats-/Jahresgrenzen.
+
+Im Archive Control müssen die vier Temperaturvariablen zur Protokollierung aktiviert sein und die Aggregation „Standard“ verwenden. Die Kachel aktiviert das Archiv absichtlich nicht selbst. Bereits gelöschte oder nie aufgezeichnete Daten werden nicht ersetzt. Bei frisch aktivierter Protokollierung stehen historische Zeiträume erst im Lauf der Zeit zur Verfügung.
+
+Zur Abnahme jede Temperatur anklicken, die Zuordnung zum Archiv prüfen, Zeitraum wechseln, vor- und zurückblättern und „Jetzt“ wählen. Die 24-Stunden-, 7-Tage- und 30-Tage-Ansicht mit den stündlichen Archiv-Mittelwerten vergleichen; für 365 Tage die täglichen Mittelwerte prüfen. Auch einen leeren Zeitraum kontrollieren: Es darf keine künstliche Kurve erscheinen. Die reale Archivdatenbank war bei der Entwicklung nicht verfügbar; lokale Tests nutzen die offiziellen ArchiveControl-Stubs.

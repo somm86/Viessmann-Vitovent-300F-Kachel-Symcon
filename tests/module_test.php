@@ -197,6 +197,54 @@ IPS_SetVariableProfileAssociation('Fixture.FloatMode', 2.5, 'Testmodus A', '', -
 IPS_SetVariableProfileAssociation('Fixture.FloatMode', 9.5, 'Testmodus B', '', -1);
 IPS_SetProperty($id, 'OutsideID', $old);
 IPS_ApplyChanges($id);
+// History uses actual ArchiveControl APIs, only for the four configured temperatures.
+function historyReply($module, $request) {
+    $module->RequestAction('LoadHistory', is_array($request) ? json_encode($request) : $request);
+    $messages = privateValue($module, 'messages');
+    $last = end($messages);
+    return json_decode($last['Data'][0], true, 512, JSON_THROW_ON_ERROR)['history'];
+}
+$base = intdiv(time() - 100000, 3600) * 3600;
+$query = ['requestId' => 'fixture_history_1', 'key' => 'outside', 'start' => $base, 'end' => $base + 7200];
+$reply = historyReply($module, $query);
+check(strpos($reply['error'], 'Archivprotokollierung') !== false, 'missing archive reported honestly');
+IPS\ModuleLoader::loadSingleModule($stubs . '/CoreStubs/ArchiveControl', '{B24E29F4-981D-4B92-842B-785D28962BD5}');
+$archive = IPS_CreateInstance('{43192F0B-135B-4CE7-A0A7-1475603F3060}');
+check(historyReply($module, $query)['error'] !== '', 'logging disabled reported');
+AC_SetLoggingStatus($archive, $old, true); // Test-only fixture setup; production module never changes logging.
+AC_StubsAddAggregatedValues($archive, $old, 0, [
+    ['TimeStamp' => $base, 'Duration' => 3600, 'Avg' => 15.5],
+    ['TimeStamp' => $base + 3600, 'Duration' => 3600, 'Avg' => 18.2]
+]);
+$reply = historyReply($module, $query);
+check($reply['error'] === '', 'hourly archive query succeeds');
+check($reply['points'] === [['time' => $base, 'value' => 15.5], ['time' => $base + 3600, 'value' => 18.2]], 'actual archive values sorted chronologically');
+check($reply['requestId'] === 'fixture_history_1' && $reply['variableID'] === $old, 'response matches request and configured source');
+check($reply['step'] === 3600, 'hourly aggregation declared');
+check(snapshot($module)['values']['outside']['id'] === $old, 'live snapshot identifies history source');
+$forged = $query;
+$forged['variableID'] = $mode;
+check(historyReply($module, $forged)['variableID'] === $old, 'client cannot select an arbitrary variable ID');
+$forged['key'] = 'mode';
+check(historyReply($module, $forged)['error'] !== '', 'mode variable cannot be read as temperature history');
+foreach ([['key' => 'flow'], ['start' => -1], ['end' => $base], ['end' => time() + 10000],
+    ['start' => $base - 367 * 86400], ['start' => (string) $base], ['requestId' => '<script>']] as $bad) {
+    check(historyReply($module, array_merge($query, $bad))['error'] !== '', 'invalid history request rejected');
+}
+check(historyReply($module, 'bad json')['error'] !== '', 'malformed history JSON rejected');
+check(historyReply($module, str_repeat('x', 513))['error'] !== '', 'oversized history payload rejected');
+AC_SetAggregationType($archive, $old, 1);
+check(strpos(historyReply($module, $query)['error'], 'Zähler') !== false, 'counter aggregation not treated as temperature');
+AC_SetAggregationType($archive, $old, 0);
+$day = intdiv($base - 40 * 86400, 86400) * 86400;
+AC_StubsAddAggregatedValues($archive, $old, 1, [['TimeStamp' => $day, 'Duration' => 86400, 'Avg' => 12.7]]);
+$long = array_merge($query, ['start' => $base - 60 * 86400]);
+$reply = historyReply($module, $long);
+check($reply['step'] === 86400 && $reply['points'][0]['value'] === 12.7, 'long ranges use actual daily averages');
+$empty = array_merge($query, ['start' => $base - 7200, 'end' => $base - 3600]);
+$reply = historyReply($module, $empty);
+check($reply['error'] === '' && $reply['points'] === [], 'empty history is not fabricated');
+check(AC_GetLoggingStatus($archive, $old), 'history requests preserve logging configuration');
 if (!is_dir(__DIR__ . '/output')) { mkdir(__DIR__ . '/output', 0777, true); }
 file_put_contents(__DIR__ . '/output/tile.html', $module->GetVisualizationTile());
 file_put_contents(__DIR__ . '/output/snapshot.json', json_encode(snapshot($module), JSON_THROW_ON_ERROR));

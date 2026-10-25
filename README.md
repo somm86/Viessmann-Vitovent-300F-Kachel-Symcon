@@ -18,6 +18,14 @@ Für die Erstinstallation:
 
 Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enthaltenen Bibliotheksordner `Vitovent300F_Kachel` vollständig nach `<Symcon-Datenverzeichnis>/modules/` auf dem **Symcon-Server** kopieren, anschließend den Symcon-Dienst neu starten. Direkt darunter muss `library.json` liegen. Nicht gleichzeitig per Module Control und lokal installieren: beide Pakete haben dieselben GUIDs. Betriebssystemdetails und Prüfschritte: [Installationsanleitung](docs/INSTALLATION.md).
 
+## Temperaturverlauf ab Version 1.6
+
+Auf **Außenluft, Zuluft, Abluft oder Fortluft klicken**, um deren Diagramm zu öffnen (auch per Tastatur mit Enter/Leertaste). Zeitbereiche: **24 Stunden, 7 Tage, 30 Tage und 365 Tage**. **Zurück/Weiter** springen jeweils um den ausgewählten Zeitraum; **Jetzt** kehrt zum aktuellen Zeitfenster zurück. Es gibt keine Navigation in die Zukunft. Schließen über ✕ oder Escape.
+
+Voraussetzung: Die jeweilige Temperaturvariable muss in einem bestehenden **Archive Control mit Standardaggregation protokolliert** sein. Das Modul liest die vorhandenen Werte nur und aktiviert oder verändert keine Protokollierung. Bei fehlender Protokollierung, fehlendem Archiv oder einem leeren Zeitraum zeigt das Diagramm einen Hinweis. Vergangene Daten können durch nachträgliches Aktivieren nicht rückwirkend erzeugt werden.
+
+Bis 30 Tage werden **stündliche Mittelwerte**, in der Jahresansicht **tägliche Mittelwerte** angezeigt. Die Achse und die Punktinformationen verwenden die Browser-Zeitzone. Lücken bleiben sichtbar, Werte zwischen vorhandenen Punkten werden geradlinig verbunden. Es werden ausschließlich die vier konfigurierten Temperaturquellen gelesen; die Betriebsartensteuerung bleibt davon unabhängig.
+
 ## Kachelgröße
 
 Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die verfügbare Höhe. Vor einer nötigen Verkleinerung wird die interne Layoutbreite entsprechend erweitert; dadurch entstehen keine breiten seitlichen Leerflächen. Inhalte werden neu umgebrochen, Symbole bleiben unverzerrt. Ein `ResizeObserver` erfasst Änderungen der Kachel und des Inhalts. Auch nach Datenupdates und beim Öffnen der Diagnose wird das Layout neu eingepasst.
@@ -70,7 +78,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.5.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.5.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.6.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.6.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 
