@@ -1,0 +1,14 @@
+{
+  "id": "{4305595E-0E5F-4124-AD59-8E11257A1E97}",
+  "name": "Vitovent300FTile",
+  "type": 3,
+  "vendor": "Custom",
+  "aliases": [
+    "Vitovent 300-F Kachel"
+  ],
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "VVF",
+  "url": "https://github.com/somm86/Viessmann-Vitovent-300F-Kachel-Symcon#installation"
+}

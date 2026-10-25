@@ -1,0 +1,12 @@
+{
+  "id": "{B24E29F4-981D-4B92-842B-785D28962BD5}",
+  "author": "somm86",
+  "name": "Vitovent 300-F Kachel",
+  "url": "https://github.com/somm86/Viessmann-Vitovent-300F-Kachel-Symcon",
+  "compatibility": {
+    "version": "7.1"
+  },
+  "version": "1.1",
+  "build": 2,
+  "date": 1792886400
+}

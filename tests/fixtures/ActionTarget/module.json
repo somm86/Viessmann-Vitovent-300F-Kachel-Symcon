@@ -1,0 +1,12 @@
+{
+  "id": "{88B1BB10-E81D-4E5E-9369-4A6F3AAB614F}",
+  "name": "FixtureActionTarget",
+  "type": 3,
+  "vendor": "Tests only",
+  "aliases": [],
+  "url": "https://github.com/somm86/Viessmann-Vitovent-300F-Kachel-Symcon",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "VVFTEST"
+}

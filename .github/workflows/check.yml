@@ -1,0 +1,40 @@
+name: Validate module
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Official Symcon stubs (pinned)
+        run: |
+          git init /tmp/SymconStubs
+          git -C /tmp/SymconStubs remote add origin https://github.com/symcon/SymconStubs.git
+          git -C /tmp/SymconStubs fetch --depth 1 origin 31f2e0478eb3763236fcf44ea4144271fdeddfd5
+          git -C /tmp/SymconStubs checkout --detach FETCH_HEAD
+      - name: PHP syntax and module behavior
+        run: |
+          for file in Vitovent300FTile/module.php tests/module_test.php tests/install_test.php tests/fixtures/ActionTarget/module.php docs/inspect-symcon.php; do php -l "$file"; done
+          python3 tests/manifests_test.py
+          php tests/module_test.php
+      - name: Browser bridge tests
+        run: |
+          python3 -m pip install playwright==1.62.0
+          python3 -m playwright install --with-deps chromium
+          python3 tests/browser_test.py
+      - name: Build installable ZIP
+        run: |
+          python3 tests/build.py
+          python3 tests/package_test.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vitovent300F-Kachel
+          path: dist/*

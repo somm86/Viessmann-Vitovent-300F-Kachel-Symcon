@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitovent 300-F · Lüftung</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1016;--panel:#131b24;--line:#26313d;--text:#edf3f6;--muted:#95a6b6;--cold:#56baff;--fresh:#53dbb1;--warm:#ffbe69;--exhaust:#d292ef}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.dashboard{max-width:1180px;margin:auto;padding:28px}.header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:25px}.eyebrow{text-transform:uppercase;letter-spacing:2.5px;font-size:10px;font-weight:650;color:var(--muted)}h1{font-size:clamp(25px,4vw,36px);letter-spacing:-1.3px;margin:3px 0 0;font-weight:600}h1 span{font-weight:350;color:var(--muted)}.badge{font-size:11px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#17232b;border:1px solid #2d424e;border-radius:30px;white-space:nowrap}.dot{width:6px;height:6px;border-radius:50%;background:#87a7bc}.badge[data-complete="true"] .dot{background:var(--fresh)}.surface{border:1px solid var(--line);border-radius:18px;background:linear-gradient(130deg,#18222c,#101720)}.section-title{display:flex;justify-content:space-between;align-items:center;padding:19px 23px;border-bottom:1px solid var(--line);gap:12px}.section-title h2{margin:0;font-size:13px;font-weight:550}.hint{font-size:11px;color:var(--muted)}.diagram{position:relative;min-height:340px;display:grid;grid-template-columns:1fr 1.35fr 1fr;grid-template-rows:1fr 1fr;gap:46px 20px;padding:35px 30px;align-items:center}.air{position:relative;z-index:1;border:1px solid color-mix(in srgb,var(--air) 35%,#26313d);border-radius:12px;padding:14px 18px;background:linear-gradient(120deg,color-mix(in srgb,var(--air) 9%,#141d27),#141d27);min-width:0}.air-label{display:flex;align-items:center;gap:8px;font-size:12px;color:#c7d2dc}.air-label i{height:7px;width:7px;border-radius:50%;background:var(--air)}.temp{font-size:clamp(25px,3.5vw,37px);line-height:1.3;font-weight:550;letter-spacing:-1px;margin-top:7px}.temp small{font-size:17px;font-weight:400;color:var(--air);letter-spacing:0}.air-caption{color:var(--muted);font-size:10px;margin-top:4px}.outside{--air:var(--cold);grid-area:1/1}.supply{--air:var(--fresh);grid-area:1/3}.exhaust{--air:var(--exhaust);grid-area:2/1}.extract{--air:var(--warm);grid-area:2/3}.exchange{grid-area:1/2/3/3;z-index:1;align-self:center;text-align:center}.exchange svg{width:min(100%,200px);filter:drop-shadow(0 12px 16px #0006);overflow:visible}.exchange strong{display:block;color:#d3dee7;font-weight:500;font-size:12px;margin-top:7px}.exchange .hint{font-size:10px}.ducts{position:absolute;width:100%;height:100%;inset:0;pointer-events:none}.ducts path{fill:none;stroke-width:2;opacity:.65}.direction{stroke-dasharray:6 8;animation:drift 5s linear infinite}.ducts .return{animation-direction:reverse}@keyframes drift{to{stroke-dashoffset:-84}}.metrics{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:14px;margin-top:16px}.metric{padding:22px;min-width:0;position:relative;overflow:hidden}.metric h2{font-size:12px;color:#bac7d2;font-weight:500;margin:0 0 15px;display:flex;gap:9px;align-items:center}.metric h2 svg{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:1.5}.metric-value{font-size:clamp(23px,3vw,30px);font-weight:500;letter-spacing:-.7px;overflow-wrap:anywhere;line-height:1.3;min-height:40px}.metric-note{font-size:10px;color:var(--muted);margin-top:13px}.mode-value{color:var(--fresh);font-size:16px;letter-spacing:0;min-height:30px;overflow-wrap:anywhere}.select-wrap{position:relative;margin-top:9px}select{width:100%;border:1px solid #405263;border-radius:8px;background:#1c2936;color:var(--text);font:12px system-ui;padding:11px 30px 11px 12px;text-overflow:ellipsis}select:focus-visible{outline:2px solid var(--fresh);outline-offset:3px}select:disabled{opacity:.5}.feedback{font-size:11px;color:#c3b59a;margin:9px 0 0;min-height:17px;overflow-wrap:anywhere}.footer{display:flex;justify-content:space-between;gap:14px;font-size:10px;color:#8192a1;padding:15px 2px}.footer span:last-child{text-align:right}.missing{color:#e3bd7e}.legend{display:flex;gap:14px;font-size:10px;color:var(--muted);padding:0 23px 17px}.legend span{display:flex;gap:6px;align-items:center}.legend i{width:12px;height:2px;background:var(--fresh)}.legend span:last-child i{background:var(--warm)}
+@media(prefers-reduced-motion:reduce){.direction{animation:none}}@media(max-width:700px){.dashboard{padding:14px}.diagram{padding:25px 15px;gap:28px 10px;min-height:300px;grid-template-columns:1fr .85fr 1fr}.air{padding:12px 10px}.air-caption{display:none}.temp{font-size:26px}.temp small{font-size:12px}.exchange strong{font-size:10px}.exchange .hint{display:none}.metrics{grid-template-columns:1fr 1fr}.mode-panel{grid-column:1/-1}.section-title{padding:15px}.header{margin-bottom:18px}.badge{font-size:10px;padding:6px 8px}.metric{padding:18px}.footer{font-size:9px}}@media(max-width:380px){.dashboard{padding:8px}.diagram{gap:22px 6px;padding:18px 8px}.air-label{font-size:10px;gap:4px}.temp{font-size:21px}.metrics{gap:8px}.header{gap:6px}.badge{white-space:normal;max-width:105px}.hint{font-size:10px}}
+</style>
+</head>
+<body>
+<main class="dashboard">
+<header class="header"><div><div class="eyebrow">Viessmann · Wohnraumlüftung</div><h1>Vitovent <span>300-F</span></h1></div><div class="badge" id="availability"><span class="dot"></span><span id="status">Daten werden geladen</span></div></header>
+<section class="surface" aria-label="Luftströme und Temperaturen">
+<div class="section-title"><h2>Luftkreislauf</h2><span class="hint">Wärmerückgewinnung · schematisch</span></div>
+<div class="diagram">
+<svg class="ducts" viewBox="0 0 1000 340" preserveAspectRatio="none" aria-hidden="true"><path stroke="#56baff" d="M240 86H393L500 170"/><path class="direction" stroke="#56baff" d="M240 86H393L500 170"/><path stroke="#53dbb1" d="M500 170L607 86H760"/><path class="direction" stroke="#53dbb1" d="M500 170L607 86H760"/><path stroke="#ffbe69" d="M760 254H607L500 170"/><path class="direction return" stroke="#ffbe69" d="M500 170L607 254H760"/><path stroke="#d292ef" d="M500 170L393 254H240"/><path class="direction return" stroke="#d292ef" d="M240 254H393L500 170"/></svg>
+<div class="air outside"><div class="air-label"><i></i>Außenluft</div><div class="temp"><span id="outside">—</span> <small>°C</small></div><div class="air-caption">Von draußen → Gerät</div></div>
+<div class="air supply"><div class="air-label"><i></i>Zuluft</div><div class="temp"><span id="supply">—</span> <small>°C</small></div><div class="air-caption">Gerät → Wohnräume</div></div>
+<div class="exchange"><svg viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="case" x2="1" y2="1"><stop stop-color="#344352"/><stop offset="1" stop-color="#16212b"/></linearGradient><pattern id="fins" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M0 0V9" stroke="#7c91a2" stroke-width="2"/></pattern><linearGradient id="core"><stop stop-color="#56baff" stop-opacity=".3"/><stop offset="1" stop-color="#ffbe69" stop-opacity=".3"/></linearGradient></defs><rect x="26" y="26" width="148" height="148" rx="24" fill="url(#case)" stroke="#4a5c6b"/><circle cx="42" cy="42" r="2" fill="#8192a1"/><circle cx="158" cy="158" r="2" fill="#8192a1"/><path d="M27 55L73 100L27 145" fill="none" stroke="#56baff" stroke-opacity=".5" stroke-width="8"/><path d="M173 55L127 100L173 145" fill="none" stroke="#ffbe69" stroke-opacity=".5" stroke-width="8"/><g transform="rotate(45 100 100)"><rect x="58" y="58" width="84" height="84" rx="7" fill="#1e303f" stroke="#93a7b6"/><rect x="62" y="62" width="76" height="76" rx="4" fill="url(#fins)"/><rect x="62" y="62" width="76" height="76" rx="4" fill="url(#core)"/></g><path d="M37 73L45 81L37 89M155 111L163 119L155 127" fill="none" stroke="#8cc9e3" stroke-width="2"/></svg><strong>Wärmetauscher</strong><span class="hint">Zwei getrennte Luftwege</span></div>
+<div class="air exhaust"><div class="air-label"><i></i>Fortluft</div><div class="temp"><span id="exhaust">—</span> <small>°C</small></div><div class="air-caption">Gerät → nach draußen</div></div>
+<div class="air extract"><div class="air-label"><i></i>Abluft</div><div class="temp"><span id="extract">—</span> <small>°C</small></div><div class="air-caption">Wohnräume → Gerät</div></div>
+</div><div class="legend"><span><i></i>Frischluftweg</span><span><i></i>Abluftweg</span></div>
+</section>
+<section class="metrics" aria-label="Lüftungswerte und Steuerung">
+<article class="surface metric"><h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7H17Q23 7 21 3Q19 0 16 3M3 12H12Q19 12 18 17Q17 21 13 19M3 17H8"/></svg>Volumenstrom</h2><div class="metric-value" id="flow">—</div><div class="metric-note" id="flowNote">Einheit aus Quellprofil</div></article>
+<article class="surface metric"><h2><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7V17M12 7V17M16 7V17"/></svg>Filterrestzeit</h2><div class="metric-value" id="filter">—</div><div class="metric-note" id="filterNote">Einheit aus Quellprofil</div></article>
+<article class="surface metric mode-panel"><h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2V12M6 5A9 9 0 1 0 18 5"/></svg>Betriebsart</h2><div class="metric-value mode-value" id="modeLabel">—</div><div class="select-wrap"><select id="modeSelect" aria-label="Betriebsart wählen" disabled><option value="">Keine Auswahl verfügbar</option></select></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p></article>
+</section>
+<footer class="footer"><span id="sourceState">Vorhandene Symcon-Variablen</span><span id="updated">Noch keine Aktualisierung</span></footer>
+</main>
+<script>
+'use strict';
+const INITIAL = /*__INITIAL_DATA__*/null;
+const byId = id => document.getElementById(id);
+let current = null;
+let pending = null;
+let actionTimer = null;
+let actionError = '';
+const number = value => value == null ? '—' : Number(value).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+function render(data) {
+    if (!data || !data.values || !data.mode || !Array.isArray(data.missing)) return;
+    current = data;
+    for (const key of ['outside', 'supply', 'extract', 'exhaust']) byId(key).textContent = number(data.values[key].value);
+    for (const key of ['flow', 'filter']) {
+        const entry = data.values[key];
+        byId(key).textContent = entry.formatted;
+        byId(key + 'Note').textContent = entry.value === null ? 'Quellvariable nicht verfügbar' : entry.hasUnit ? 'Originalwert aus IP-Symcon' : 'Quellprofil ohne Einheit';
+    }
+    byId('modeLabel').textContent = data.values.mode.formatted;
+    byId('availability').dataset.complete = String(data.missing.length === 0);
+    byId('status').textContent = data.missing.length ? 'Daten unvollständig' : 'Quelldaten verfügbar';
+    byId('sourceState').textContent = data.missing.length ? 'Nicht verfügbar: ' + data.missing.join(', ') : 'IP-Symcon · 7 Quellvariablen';
+    byId('sourceState').classList.toggle('missing', data.missing.length > 0);
+    const stamps = Object.values(data.values).map(v => v.updated).filter(v => v > 0);
+    byId('updated').textContent = stamps.length ? 'Letztes Quellupdate: ' + new Date(Math.max(...stamps) * 1000).toLocaleString('de-DE') : 'Noch kein Quellzeitstempel';
+    if (pending !== null && data.values.mode.value === pending) finishPending('');
+    const select = byId('modeSelect');
+    const choices = data.mode.choices;
+    const selected = pending !== null ? pending : data.values.mode.value;
+    const signature = JSON.stringify([choices, selected]);
+    if (select.dataset.signature !== signature) {
+    select.dataset.signature = signature;
+    select.replaceChildren();
+    if (!choices.some(choice => choice.value === selected)) {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = choices.length ? 'Betriebsart wählen …' : 'Keine Auswahl verfügbar';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+    }
+    for (const choice of choices) {
+        const option = document.createElement('option');
+        option.value = String(choice.value);
+        option.textContent = choice.label;
+        option.selected = choice.value === selected;
+        select.appendChild(option);
+    }
+    }
+    select.disabled = !data.mode.writable || !choices.length || pending !== null || typeof requestAction !== 'function';
+    byId('feedback').textContent = actionError || (pending !== null ? 'Anforderung gesendet · warte auf Quellwert …' : data.mode.reason || (typeof requestAction !== 'function' ? 'Steuerung nur in der Symcon-Kachel verfügbar.' : 'Auswahl aus dem aktuellen Variablenprofil'));
+}
+// The HTML SDK calls this global function with the JSON text published by PHP.
+function handleMessage(message) {
+    try { render(typeof message === 'string' ? JSON.parse(message) : message); }
+    catch (error) { byId('feedback').textContent = 'Datenaktualisierung konnte nicht gelesen werden.'; }
+}
+function finishPending(error) {
+    clearTimeout(actionTimer);
+    pending = null;
+    actionError = error;
+}
+byId('modeSelect').addEventListener('change', async event => {
+    if (!current || !current.mode.writable || pending !== null || typeof requestAction !== 'function') return;
+    const choice = current.mode.choices.find(item => String(item.value) === event.target.value);
+    if (!choice) return;
+    pending = choice.value;
+    actionError = '';
+    render(current);
+    actionTimer = setTimeout(() => {
+        finishPending('Keine Bestätigung vom Quellwert. Bitte Betriebsart in IP-Symcon prüfen.');
+        render(current);
+    }, 15000);
+    try {
+        // A resolved SDK call only confirms submission; the source value confirms the mode.
+        await requestAction('ChangeMode', choice.value);
+    } catch (error) {
+        finishPending('Schalten fehlgeschlagen. Bitte Variablenaktion in IP-Symcon prüfen.');
+        render(current);
+    }
+});
+render(INITIAL);
+// Some frontend versions attach the SDK bridge after the document scripts run.
+let sdkAvailable = typeof requestAction === 'function';
+setInterval(() => {
+    const available = typeof requestAction === 'function';
+    if (available !== sdkAvailable) {
+        sdkAvailable = available;
+        if (current) render(current);
+    }
+}, 1000);
+</script>
+</body>
+</html>
