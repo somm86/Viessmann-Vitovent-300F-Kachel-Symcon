@@ -18,6 +18,10 @@ Für die Erstinstallation:
 
 Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enthaltenen Bibliotheksordner `Vitovent300F_Kachel` vollständig nach `<Symcon-Datenverzeichnis>/modules/` auf dem **Symcon-Server** kopieren, anschließend den Symcon-Dienst neu starten. Direkt darunter muss `library.json` liegen. Nicht gleichzeitig per Module Control und lokal installieren: beide Pakete haben dieselben GUIDs. Betriebssystemdetails und Prüfschritte: [Installationsanleitung](docs/INSTALLATION.md).
 
+## Kachelgröße
+
+Das vollständige Dashboard passt sich proportional an die verfügbare Breite **und Höhe** an. Ein `ResizeObserver` erfasst Größenänderungen der Kachel und des Inhalts. Bei flachen Kacheln wird die gesamte Darstellung einschließlich Text und Bedienelementen verkleinert, sodass nichts unten abgeschnitten wird. Das Seitenverhältnis bleibt erhalten; je nach Kachelformat bleiben seitlich freie Flächen. Auch nach Datenupdates und beim Öffnen der Diagnose wird die Größe neu angepasst.
+
 ## Vorbelegte Quellvariablen
 
 | Anzeige | ID | Eigenschaft |
@@ -66,7 +70,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.3.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.3.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.4.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.4.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

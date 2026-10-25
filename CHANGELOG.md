@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.4 · Build 5 · 2026-10-25
+
+- Gesamtes Dashboard proportional in verfügbare Breite und Höhe einpassen; zuvor wurden nur Breite und Symbole angepasst.
+- Kachel- und Inhaltsgrößen per ResizeObserver beobachten, bei Resize, Datenupdate und Schriftladen neu skalieren.
+- Diagnoseausgabe intern begrenzen; auch nach deren Öffnen bleibt die Kachel vollständig sichtbar.
+- Regressionstests für flache Kacheln bis 320 × 200 px und Bedienung skalierter Betriebsart-Schaltflächen ergänzt.
+
 ## 1.3 · Build 4 · 2026-10-25
 
 - Symbole über Containergrößen und begrenzte fließende Größen an Kachel und Teilbereiche angepasst.

@@ -150,6 +150,33 @@ with sync_playwright() as p:
     for selector in symbol_sizes[1536]:
         check(symbol_sizes[1536][selector] > symbol_sizes[360][selector], f'{selector} scales with tile width')
     check(page.locator('.outside > .icon').first.is_visible(), 'air symbol remains visible in small tiles')
+    # Regression: changing only the tile height must shrink the entire dashboard.
+    height_sizes = {}
+    for width, height in [(1180, 1000), (1180, 300), (800, 450), (360, 360), (320, 200), (360, 1400)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        box = page.locator('.dashboard').bounding_box()
+        check(box['y'] >= -1 and box['y'] + box['height'] <= height + 1, f'dashboard fits height {width}x{height}')
+        check(box['x'] >= -1 and box['x'] + box['width'] <= width + 1, f'dashboard fits width {width}x{height}')
+        button_box = page.locator('#modeButtons button').last.bounding_box()
+        check(button_box['y'] + button_box['height'] <= height + 1, f'mode control stays inside {width}x{height}')
+        if width == 1180:
+            height_sizes[height] = page.locator('.metric-icon').first.bounding_box()['height']
+        if (width, height) == (1180, 300):
+            page.screenshot(path=str(ROOT / 'tests/output/dashboard-flat.png'), animations='disabled')
+    check(height_sizes[300] < height_sizes[1000], 'symbols shrink when only available height shrinks')
+    page.set_viewport_size({'width': 800, 'height': 350})
+    page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+    page.evaluate('() => { window.calls = []; window.requestAction = (ident, value) => { calls.push({ident, value}); }; }')
+    page.locator('#modeButtons button').nth(1).click()
+    check(page.evaluate('calls[0].value') == -702, 'scaled mode button still dispatches correct source value')
+    confirmed_small = copy.deepcopy(demo)
+    confirmed_small['values']['mode'].update(value=-702, formatted='Reduziert')
+    page.evaluate('handleMessage', json.dumps(confirmed_small))
+    page.locator('#diagnosis').click()
+    page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+    box = page.locator('.dashboard').bounding_box()
+    check(box['y'] + box['height'] <= 351, 'expanding diagnosis refits to available height')
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()
 print(f'PASS: {checks} browser assertions (simulated HTML-SDK bridge)')
