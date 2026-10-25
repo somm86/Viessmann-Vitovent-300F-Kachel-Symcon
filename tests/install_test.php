@@ -13,7 +13,7 @@ if (IPS_GetModuleList() !== ['{4305595E-0E5F-4124-AD59-8E11257A1E97}']) {
 $id = IPS_CreateInstance('{4305595E-0E5F-4124-AD59-8E11257A1E97}');
 $instance = IPS\InstanceManager::getInstanceInterface($id);
 $form = json_decode($instance->GetConfigurationForm(), true, 512, JSON_THROW_ON_ERROR);
-if (count($form['elements']) !== 9 || IPS_GetProperty($id, 'ModeID') !== 54849 ||
+if (count($form['elements']) !== 11 || IPS_GetProperty($id, 'ModeID') !== 54849 ||
     IPS_GetInstance($id)['InstanceVisualizationType'] !== 1 ||
     IPS_GetInstance($id)['InstanceStatus'] !== 104 ||
     strpos($instance->GetVisualizationTile(), '/*__INITIAL_DATA__*/null') !== false) {

@@ -1,6 +1,6 @@
 # Viessmann Vitovent 300-F · Kachel für IP-Symcon
 
-Eigenständiges PHP-Modul für die **Kachelvisualisierung ab IP-Symcon 7.1**. Dunkles, responsives Dashboard mit zentralem Wärmetauscher, vier farbigen Luftwegen, vier Temperaturen, Volumenstrom, Filterrestzeit und profilbasierter Betriebsartensteuerung. Ausschließlich Lüftungsdaten, keine Heizungswerte.
+Eigenständiges PHP-Modul für die **Kachelvisualisierung ab IP-Symcon 7.1**. Dunkles, responsives Dashboard mit zentralem Wärmetauscher, vier farbigen Luftwegen, vier Temperaturen, Volumenstrom, Filterrestzeit, Momentanleistung, Gesamtverbrauch und profilbasierter Betriebsartensteuerung. Ausschließlich Lüftungsdaten, keine Heizungswerte.
 
 ![Dashboard mit ausdrücklich synthetischen Testdaten](docs/dashboard.png)
 
@@ -13,7 +13,7 @@ Für eine vorhandene Installation: Repository in **Module Control aktualisieren*
 Für die Erstinstallation:
 
 1. In der IP-Symcon-Verwaltungskonsole **Module Control** öffnen, über **Hinzufügen** die URL `https://github.com/somm86/Viessmann-Vitovent-300F-Kachel-Symcon` eintragen und den veröffentlichten Branch auswählen.
-2. Instanz **Vitovent 300-F Kachel** anlegen. Die sieben Quellvariablen prüfen, dann **Übernehmen**.
+2. Instanz **Vitovent 300-F Kachel** anlegen. Die neun Quellvariablen prüfen, dann **Übernehmen**.
 3. Die Instanz in der Kachelvisualisierung hinzufügen bzw. verlinken. Für die Übersicht eine ausreichend große Kachel wählen.
 
 Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enthaltenen Bibliotheksordner `Vitovent300F_Kachel` vollständig nach `<Symcon-Datenverzeichnis>/modules/` auf dem **Symcon-Server** kopieren, anschließend den Symcon-Dienst neu starten. Direkt darunter muss `library.json` liegen. Nicht gleichzeitig per Module Control und lokal installieren: beide Pakete haben dieselben GUIDs. Betriebssystemdetails und Prüfschritte: [Installationsanleitung](docs/INSTALLATION.md).
@@ -24,7 +24,19 @@ Auf **Außenluft, Zuluft, Abluft oder Fortluft klicken**, um deren Diagramm zu �
 
 Voraussetzung: Die jeweilige Temperaturvariable muss in einem bestehenden **Archive Control mit Standardaggregation protokolliert** sein. Das Modul liest die vorhandenen Werte nur und aktiviert oder verändert keine Protokollierung. Bei fehlender Protokollierung, fehlendem Archiv oder einem leeren Zeitraum zeigt das Diagramm einen Hinweis. Vergangene Daten können durch nachträgliches Aktivieren nicht rückwirkend erzeugt werden.
 
-Bis 30 Tage werden **stündliche Mittelwerte**, in der Jahresansicht **tägliche Mittelwerte** angezeigt. Die Achse und die Punktinformationen verwenden die Browser-Zeitzone. Lücken bleiben sichtbar, Werte zwischen vorhandenen Punkten werden geradlinig verbunden. Es werden ausschließlich die vier konfigurierten Temperaturquellen gelesen; die Betriebsartensteuerung bleibt davon unabhängig.
+Bis 30 Tage werden **stündliche Mittelwerte**, in der Jahresansicht **tägliche Mittelwerte** angezeigt. Die Achse und die Punktinformationen verwenden die Browser-Zeitzone. Lücken bleiben sichtbar, Werte zwischen vorhandenen Punkten werden geradlinig verbunden. Zusätzlich sind ab 1.8 die beiden konfigurierten Stromwerte im selben Diagrammdialog verfügbar; die Betriebsartensteuerung bleibt davon unabhängig.
+
+## Stromwerte und Diagramme ab Version 1.8
+
+**Momentanleistung** liest die Wirkleistung von Variable **48602**, **Gesamtverbrauch** den Gesamtzählerstand von **50335**. Beide IDs können im Instanzformular geändert werden. Die Liveanzeige übernimmt `GetValueFormatted()` samt Originaleinheit, beispielsweise W und kWh. Keine Umrechnung oder Veränderung der Quellvariablen.
+
+Auf die jeweilige Karte klicken, um den Verlauf mit der vorhandenen Zeitbereichsauswahl und Vor-/Zurück-Navigation zu öffnen. Voraussetzung ist die Protokollierung im Archive Control:
+
+- Momentanleistung: Standardaggregation; Diagramm mit stündlichen bzw. täglichen Mittelwerten in der Quelleneinheit.
+- Gesamtverbrauch bei **Zähleraggregation**: Balkendiagramm mit tatsächlichem Verbrauch pro Stunde bzw. Tag aus den Archiv-Zählerdifferenzen. Dies sind Verbrauchsmengen, keine Gesamtzählerstände und keine Leistungswerte.
+- Gesamtverbrauch bei **Standardaggregation**: Linienverlauf der archivierten Gesamtzählerstände (Mittelwerte), ausdrücklich als Zählerstand beschriftet. Aus diesen Mittelwerten wird kein Intervallverbrauch berechnet.
+
+Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch Einheiten im Diagramm stammen aus dem Profil bzw. der Darstellung. Wenn keine Einheit hinterlegt ist, wird „Quelleneinheit“ gemeldet. Die Angaben im Screenshot sind Beispieldaten; auf der Anlage werden die tatsächlichen Werte geladen.
 
 ## Kachelgröße
 
@@ -41,6 +53,8 @@ Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die
 | Volumenstrom | 36483 | `FlowID` |
 | Filterrestzeit | 51925 | `FilterID` |
 | Betriebsart | 54849 | `ModeID` |
+| Momentanleistung | 48602 | `PowerID` |
+| Gesamtverbrauch | 50335 | `EnergyID` |
 
 Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Volumenstrom und Filterrestzeit werden mit `GetValueFormatted()` gemäß dem tatsächlichen Quellprofil angezeigt; ohne Einheit im Profil wird keine erfunden. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
 
@@ -78,7 +92,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.7.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.7.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.8.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.8.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

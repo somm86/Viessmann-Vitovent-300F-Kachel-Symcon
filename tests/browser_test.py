@@ -125,6 +125,8 @@ with sync_playwright() as p:
         demo['values'][key]['value'] = value
     demo['values']['flow'].update(value=85, formatted='85 m³/h', hasUnit=True, range={'min': 0, 'max': 200})
     demo['values']['filter'].update(value=281, formatted='281 Tage', hasUnit=True, range={'min': 0, 'max': 365})
+    demo['values']['power'].update(value=37, formatted='37 W', hasUnit=True, unit='W')
+    demo['values']['energy'].update(value=952.6, formatted='952,60 kWh', hasUnit=True, unit='kWh')
     demo['values']['mode'].update(value=-701, formatted='Grundbetrieb')
     demo['mode']['choices'] = [
         {'value': -701, 'label': 'Grundbetrieb'}, {'value': -702, 'label': 'Reduziert'},
@@ -189,14 +191,16 @@ with sync_playwright() as p:
     check(request['end'] - request['start'] == 86400, 'default window is 24 hours')
     check(page.locator('#historyPrevious').is_disabled(), 'duplicate navigation disabled while loading')
 
-    def reply_history(empty=False, error='', request_override=None):
+    def reply_history(empty=False, error='', request_override=None, kind=None):
         request = request_override or json.loads(page.evaluate('calls.at(-1).value'))
+        kind = kind or ('consumption' if request['key'] == 'energy' else 'average')
         step = 86400 if request['end'] - request['start'] > 31 * 86400 else 3600
         data = {'requestId': request['requestId'], 'key': request['key'], 'variableID': demo['values'][request['key']]['id'],
-                'start': request['start'], 'end': request['end'], 'step': step, 'error': error,
-                'aggregation': 'Tägliche Mittelwerte' if step == 86400 else 'Stündliche Mittelwerte', 'points': [] if empty else [
-                    {'time': request['start'] + step, 'value': 15.2},
-                    {'time': request['start'] + step * 2, 'value': 16.4}]}
+                'start': request['start'], 'end': request['end'], 'step': step, 'error': error, 'kind': kind,
+                'unit': demo['values'][request['key']].get('unit') or '°C',
+                'aggregation': ('Verbrauch je Tag (Zählerdifferenzen)' if step == 86400 else 'Verbrauch je Stunde (Zählerdifferenzen)') if kind == 'consumption' else ('Tägliche Mittelwerte' if step == 86400 else 'Stündliche Mittelwerte'), 'points': [] if empty else [
+                    {'time': request['start'] + step, 'value': .037 if kind == 'consumption' else 951.8 if kind == 'level' else 15.2},
+                    {'time': request['start'] + step * 2, 'value': .041 if kind == 'consumption' else 952.1 if kind == 'level' else 16.4}]}
         page.evaluate('handleMessage', json.dumps({'history': data}))
 
     reply_history()
@@ -266,6 +270,43 @@ with sync_playwright() as p:
     check(dialog_box['x'] >= 0 and dialog_box['x'] + dialog_box['width'] <= 321, 'graph dialog fits narrow tile')
     check(dialog_box['y'] >= 0 and dialog_box['y'] + dialog_box['height'] <= 361, 'graph dialog fits available height')
     check(page.locator('#historyChart').evaluate('el => el.viewBox.baseVal.width <= el.clientWidth + 1'), 'chart labels use actual narrow dialog width')
+    page.locator('#historyClose').click()
+    # New electric readings are live and use the same range/navigation graph.
+    page.set_viewport_size({'width': 1100, 'height': 850})
+    check(page.locator('#power').inner_text() == '37 W', 'power displays original formatted source value')
+    check(page.locator('#energy').inner_text() == '952,60 kWh', 'energy displays original formatted source value')
+    updated_electric = copy.deepcopy(demo)
+    updated_electric['values']['power'].update(value=42, formatted='42 W')
+    updated_electric['values']['energy'].update(value=953.25, formatted='953,25 kWh')
+    page.evaluate('handleMessage', json.dumps(updated_electric))
+    check(page.locator('#power').inner_text() == '42 W', 'power responds to live update')
+    check(page.locator('#energy').inner_text() == '953,25 kWh', 'energy responds to live update')
+    page.locator('.power-panel').click()
+    check(json.loads(page.evaluate('calls.at(-1).value'))['key'] == 'power', 'power opens its own history source')
+    reply_history()
+    check('Momentanleistung' in page.locator('#historyTitle').inner_text(), 'power graph title identifies the source')
+    check(page.locator('#historyUnit').inner_text().endswith('W'), 'power graph uses watts')
+    check('°C' not in page.locator('#historyChart').text_content(), 'power graph has no temperature units')
+    page.locator('#historyRange').select_option('86400')
+    reply_history()
+    page.locator('#historyPrevious').click()
+    check(json.loads(page.evaluate('calls.at(-1).value'))['key'] == 'power', 'power range navigation preserves source')
+    reply_history()
+    page.locator('#historyClose').click()
+    page.locator('.energy-panel').focus()
+    page.locator('.energy-panel').press('Enter')
+    check(json.loads(page.evaluate('calls.at(-1).value'))['key'] == 'energy', 'energy graph opens from keyboard')
+    reply_history()
+    check(page.locator('#historyChart .history-bar').count() == 2, 'counter consumption uses interval bars')
+    check(page.locator('#historyChart circle').count() == 0, 'counter deltas are not plotted as a cumulative meter line')
+    check('Verbrauch pro Archivintervall' in page.locator('#historyUnit').inner_text(), 'counter graph explains interval consumption')
+    check('kWh' in page.locator('#historyUnit').inner_text(), 'energy graph retains source unit')
+    check('0,037 kWh' in page.locator('#historyChart .history-bar title').first.text_content(), 'small energy values retain useful precision')
+    check(page.locator('#historyChart').evaluate('el => [...el.querySelectorAll("text")].every(t => {const b=t.getBBox(); return b.x >= -1 && b.x+b.width <= el.viewBox.baseVal.width+1;})'), 'energy axis labels fit without clipping units')
+    page.screenshot(path=str(ROOT / 'tests/output/electricity-history.png'), animations='disabled')
+    reply_history(kind='level')
+    check('Zählerstand' in page.locator('#historyUnit').inner_text(), 'standard energy logging is labeled as meter level')
+    check(page.locator('#historyChart circle').count() == 2 and page.locator('#historyChart .history-bar').count() == 0, 'standard total-energy archive is a level curve')
     page.locator('#historyClose').click()
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()

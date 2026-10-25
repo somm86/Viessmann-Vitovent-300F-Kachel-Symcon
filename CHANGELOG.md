@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.8 · Build 9 · 2026-10-25
+
+- Momentanleistung (PowerID 48602) und Gesamtverbrauch (EnergyID 50335) als zusätzliche Live-Karten mit Symbol und anklickbarem Verlauf ergänzt.
+- Beide Quellen in Formular, Referenzen, Aktualisierung, Diagnose und Quellstatus aufgenommen.
+- Verlauf mit Zeitwahl und Navigation; Leistungs-Mittelwerte, Energie-Zählerdifferenzen als Verbrauchsbalken oder Gesamtzählerstand als Kurve gemäß tatsächlicher Archivierungsart.
+- Originaleinheiten aus den Quellen, bis zu vier Nachkommastellen für kleine Energiemengen und breitere Achsenbeschriftung.
+- Standard-/Zähleraggregation mit offiziellen ArchiveControl-Stubs und die neue Oberfläche im Browser geprüft.
+
 ## 1.7 · Build 8 · 2026-10-25
 
 - Unteres Zusatzfeld „Aktuelle Betriebsart“ samt Informationssymbol entfernt. Die aktuelle Betriebsart bleibt im Kopfbereich und an der aktiven Betriebsart-Kachel sichtbar.

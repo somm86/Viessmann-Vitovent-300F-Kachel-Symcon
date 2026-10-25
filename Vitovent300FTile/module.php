@@ -12,7 +12,9 @@ class Vitovent300FTile extends IPSModule
         'exhaust' => ['ExhaustID', 23757, 'Fortluft'],
         'flow' => ['FlowID', 36483, 'Volumenstrom'],
         'filter' => ['FilterID', 51925, 'Filterrestzeit'],
-        'mode' => ['ModeID', 54849, 'Betriebsart']
+        'mode' => ['ModeID', 54849, 'Betriebsart'],
+        'power' => ['PowerID', 48602, 'Momentanleistung'],
+        'energy' => ['EnergyID', 50335, 'Gesamtverbrauch']
     ];
 
     public function Create()
@@ -73,7 +75,7 @@ class Vitovent300FTile extends IPSModule
         }
         $elements[] = ['type' => 'Label', 'caption' => 'Temperaturen müssen in °C vorliegen. Einheiten für Volumenstrom und Filterrestzeit stammen aus den Quellprofilen. Ohne Profil wird keine Einheit angenommen.'];
         return $this->encode(['elements' => $elements, 'actions' => [['type' => 'Button', 'caption' => 'Betriebsart-Diagnose anzeigen', 'onClick' => 'echo VVF_GetDiagnostics($id);']], 'status' => [
-            ['code' => 102, 'icon' => 'active', 'caption' => 'Alle sieben Quellvariablen verfügbar'],
+            ['code' => 102, 'icon' => 'active', 'caption' => 'Alle neun Quellvariablen verfügbar'],
             ['code' => 104, 'icon' => 'inactive', 'caption' => 'Quellvariable fehlt oder hat einen ungeeigneten Datentyp']
         ]]);
     }
@@ -160,8 +162,8 @@ class Vitovent300FTile extends IPSModule
             }
             $reply['requestId'] = $request['requestId'];
             $key = $request['key'] ?? '';
-            if (!is_string($key) || !in_array($key, ['outside', 'supply', 'extract', 'exhaust'], true)) {
-                throw new InvalidArgumentException('Verlauf nur für die vier Temperaturquellen verfügbar.');
+            if (!is_string($key) || !in_array($key, ['outside', 'supply', 'extract', 'exhaust', 'power', 'energy'], true)) {
+                throw new InvalidArgumentException('Verlauf nur für konfigurierte Temperatur- und Energiequellen verfügbar.');
             }
             $reply['key'] = $key;
             $start = $request['start'] ?? null;
@@ -175,7 +177,7 @@ class Vitovent300FTile extends IPSModule
             }
             $id = $this->ReadPropertyInteger(self::SOURCES[$key][0]);
             if ($id <= 0 || !IPS_VariableExists($id) || !in_array(IPS_GetVariable($id)['VariableType'], [1, 2], true)) {
-                throw new RuntimeException('Temperaturvariable nicht verfügbar.');
+                throw new RuntimeException('Messwertvariable nicht verfügbar.');
             }
             $reply['variableID'] = $id;
             $archive = 0;
@@ -186,13 +188,24 @@ class Vitovent300FTile extends IPSModule
                 }
             }
             if ($archive === 0) {
-                throw new RuntimeException('Für diese Temperatur ist keine Archivprotokollierung aktiv. Bitte die Protokollierung im Archive Control prüfen.');
+                throw new RuntimeException('Für diesen Messwert ist keine Archivprotokollierung aktiv. Bitte die Protokollierung im Archive Control prüfen.');
             }
-            if (AC_GetAggregationType($archive, $id) !== 0) {
-                throw new RuntimeException('Die Temperatur muss im Archiv als Standardwert statt als Zähler protokolliert werden.');
+            $aggregationType = AC_GetAggregationType($archive, $id);
+            if ($aggregationType !== 0 && !($key === 'energy' && $aggregationType === 1)) {
+                throw new RuntimeException('Temperatur und Momentanleistung müssen im Archiv als Standardwert statt als Zähler protokolliert werden.');
             }
+            $variable = IPS_GetVariable($id);
+            $profile = $this->profile($variable, $id);
+            $presentation = $this->presentation($id);
+            $reply['unit'] = in_array($key, ['power', 'energy'], true) ? trim($profile['Suffix'] ?? $presentation['SUFFIX'] ?? '') : '°C';
+            $reply['kind'] = $key === 'energy' ? ($aggregationType === 1 ? 'consumption' : 'level') : 'average';
             $level = $end - $start > 31 * 86400 ? 1 : 0;
             $reply['aggregation'] = $level === 0 ? 'Stündliche Mittelwerte' : 'Tägliche Mittelwerte';
+            if ($reply['kind'] === 'consumption') {
+                $reply['aggregation'] = $level === 0 ? 'Verbrauch je Stunde (Zählerdifferenzen)' : 'Verbrauch je Tag (Zählerdifferenzen)';
+            } elseif ($reply['kind'] === 'level') {
+                $reply['aggregation'] .= ' des Zählerstands';
+            }
             $reply['step'] = $level === 0 ? 3600 : 86400;
             $reply['start'] = $start;
             $reply['end'] = $end;
@@ -202,7 +215,11 @@ class Vitovent300FTile extends IPSModule
                 $temperature = $row['Avg'];
                 if ($timestamp >= $start && $timestamp <= $end &&
                     (is_int($temperature) || is_float($temperature)) && is_finite((float) $temperature)) {
-                    $reply['points'][] = ['time' => (int) $timestamp, 'value' => $temperature];
+                    $point = ['time' => (int) $timestamp, 'value' => $temperature];
+                    if ($reply['kind'] === 'consumption') {
+                        $point['duration'] = (int) ($row['Duration'] ?? $reply['step']);
+                    }
+                    $reply['points'][] = $point;
                 }
             }
             usort($reply['points'], function ($a, $b) { return $a['time'] <=> $b['time']; });
@@ -323,6 +340,7 @@ class Vitovent300FTile extends IPSModule
                         $max = $profile !== null ? $profile['MaxValue'] : ($presentation['MAX'] ?? null);
                         $entry = ['id' => $id, 'value' => $value, 'formatted' => GetValueFormatted($id),
                             'updated' => (int) $variable['VariableUpdated'],
+                            'unit' => trim($profile['Suffix'] ?? $presentation['SUFFIX'] ?? ''),
                             'hasUnit' => $profile !== null ? (trim($profile['Prefix']) !== '' || trim($profile['Suffix']) !== '') :
                                 (trim($presentation['PREFIX'] ?? '') !== '' || trim($presentation['SUFFIX'] ?? '') !== ''),
                             'range' => is_numeric($min) && is_numeric($max) && $max > $min ? ['min' => $min, 'max' => $max] : null];

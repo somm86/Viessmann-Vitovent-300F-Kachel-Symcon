@@ -41,9 +41,9 @@ Der tatsächliche Frontend-Transport und die Gerätewirkung müssen weiterhin au
 
 ## Temperaturverlauf ab 1.6
 
-`requestAction('LoadHistory', JSON-Text)` sendet nur einen festen Quellschlüssel, Unix-Start/-Endzeit und eine Anfragekennung. Der Server bestimmt die tatsächliche ID aus der Instanzkonfiguration. Andere Quellschlüssel als die vier Temperaturen, ungültige Zeitstempel, Zukunftsbereiche und Fenster über 366 Tage werden abgewiesen. Eine kleine Zeitabweichung des Clients von bis zu fünf Minuten wird toleriert. Payload maximal 512 Bytes; Rückgabe maximal 1000 Datensätze. Innerhalb der zulässigen Fenster umfasst die gewählte Aggregationsstufe höchstens etwa 745 stündliche bzw. 367 tägliche Datensätze.
+`requestAction('LoadHistory', JSON-Text)` sendet nur einen festen Quellschlüssel, Unix-Start/-Endzeit und eine Anfragekennung. Der Server bestimmt die tatsächliche ID aus der Instanzkonfiguration. Andere Quellschlüssel als die vier Temperaturen und die konfigurierten Quellen `power`/`energy`, ungültige Zeitstempel, Zukunftsbereiche und Fenster über 366 Tage werden abgewiesen. Eine kleine Zeitabweichung des Clients von bis zu fünf Minuten wird toleriert. Payload maximal 512 Bytes; Rückgabe maximal 1000 Datensätze. Innerhalb der zulässigen Fenster umfasst die gewählte Aggregationsstufe höchstens etwa 745 stündliche bzw. 367 tägliche Datensätze.
 
-`IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')` sucht vorhandene Archive. `AC_GetLoggingStatus()` und `AC_GetAggregationType()` prüfen aktive Standardprotokollierung. `AC_GetAggregatedValues()` liest Stufe 0 (stündlich) bis einschließlich 31 Tage, darüber Stufe 1 (täglich). Verwendet werden ausschließlich echte `TimeStamp`-/`Avg`-Werte. Es gibt weder `AC_SetLoggingStatus()` noch `SetValue()` im Produktionspfad.
+`IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}')` sucht vorhandene Archive. `AC_GetLoggingStatus()` und `AC_GetAggregationType()` prüfen aktive Standardprotokollierung. `AC_GetAggregatedValues()` liest Stufe 0 (stündlich) bis einschließlich 31 Tage, darüber Stufe 1 (täglich). Verwendet werden ausschließlich echte `TimeStamp`-/`Avg`-Werte. Bei Standardaggregation ist `Avg` der Mittelwert, bei Zähleraggregation die Summe positiver Zählerdifferenzen des Intervalls. Es gibt weder `AC_SetLoggingStatus()` noch `SetValue()` im Produktionspfad.
 
 Die Antwort kommt separat als `{"history": {...}}` über `UpdateVisualizationValue()`; reguläre Live-Snapshots und Aktionsfehler bleiben erhalten. Die Kachel ordnet Antworten über Quellschlüssel, Quell-ID und Anfragekennung zu und ignoriert verspätete Antworten. Bei einem Wechsel der Quelle oder Schließen/sofortigem Wiederöffnen wird keine ältere Anfrage als aktuelle angezeigt. Der Diagrammdialog liegt außerhalb des transformierten Dashboards. SVG-Achsen werden passend zur Dialoggröße erzeugt; Datenlücken über die erwartete Aggregationsdauer werden nicht durch Linien verbunden.
 
@@ -52,3 +52,15 @@ Direkt gelesene offizielle Referenzen:
 - [AC_GetAggregatedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getaggregatedvalues/): Stufen, Limit, absteigende Rückgabereihenfolge, `TimeStamp`, `Avg` und Aggregationszeiträume.
 - [AC_GetLoggedValues](https://www.symcon.de/de/service/dokumentation/modulreferenz/kern-instanzen/archive-control/ac-getloggedvalues/): Empfehlungen zur Verwendung vorhandener Aggregate statt belastender Rohdatenabfragen. Die Kachel verwendet deshalb Aggregatdaten.
 - [HTML-SDK openObject](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/openobject/): öffnet eine maximierte Objektkachel ab 8.2, garantiert jedoch kein spezifisches Temperaturdiagramm samt gewünschter Navigation. Daher wird ein eigener, nur lesender Diagrammdialog umgesetzt.
+
+## Stromwerte ab 1.8
+
+Zwei zusätzliche Integer-Eigenschaften `PowerID=48602` und `EnergyID=50335` sind in denselben Lifecycle, Referenzen, Meldungen und Live-Snapshot eingebunden. Damit gibt es neun Quellen und sechs erlaubte Verlaufsschlüssel. Livewerte sind read-only; ausschließlich die bestehende Betriebsart nutzt die Aktionsweiterleitung an eine Quellvariable.
+
+Der History-Server liefert zusätzlich `unit` aus Profil-Suffix bzw. Darstellungs-Suffix und `kind`:
+
+- `average`: Temperatur bzw. Leistung, nur Standardaggregation.
+- `level`: Gesamtverbrauch mit Standardaggregation; `Avg` bleibt der gemittelte Gesamtzählerstand.
+- `consumption`: Gesamtverbrauch mit Zähleraggregation; `Avg` ist laut offizieller Archive-Control-Dokumentation die Verbrauchsmenge des jeweiligen Intervalls. `Duration` bleibt für die Breite der Verbrauchsbalken erhalten, auch bei unterschiedlich langen Archivintervallen.
+
+Die Oberfläche zeichnet `consumption` als Balken, `average` und `level` als Kurven. Energieachsen und Tooltips behalten bis zu vier Nachkommastellen, damit kleine kWh-Mengen nicht als Null erscheinen. Der linke Achsenrand berücksichtigt Zahlen und Einheit. Es gibt keine feste Annahme über W/kW oder Wh/kWh und keine automatische Umrechnung.

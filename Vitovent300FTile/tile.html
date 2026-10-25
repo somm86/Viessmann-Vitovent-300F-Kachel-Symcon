@@ -50,6 +50,13 @@ html,body{width:100%;height:100%;overflow:hidden}
 .history-window{font-size:12px;color:#92bcd8}.history-status{color:#dbd0ad;font-size:13px}.history-chart{display:block;width:100%;height:clamp(180px,45vh,390px)}.history-chart[hidden]{display:none}
 .history-point{opacity:.5}.history-point:hover{opacity:1;r:5}
 @media(max-width:500px){.history-dialog{padding:14px}.history-dialog h2{font-size:17px}.history-navigation{width:100%}.history-dialog button{padding:9px}.history-toolbar{gap:10px}}
+
+.power-metrics{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.power-metrics .metric{padding:18px 22px;cursor:pointer}
+.power-panel .metric-icon{color:#ffd16c}.energy-panel .metric-icon{color:#b9a2ff}
+.history-hint{font-size:10px;color:#80b6d6;margin-top:10px}
+.power-metrics .metric:focus-visible{outline:2px solid #d5f3ff;outline-offset:3px}
+@media(max-width:600px){.power-metrics{gap:12px;margin-top:12px}.power-metrics .metric{padding:14px 12px}.power-metrics .metric-heading{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -65,6 +72,8 @@ html,body{width:100%;height:100%;overflow:hidden}
 <symbol id="leaf" viewBox="0 0 48 48"><path d="M10 32C5 16 25 7 42 5c0 21-9 35-24 31M5 43 31 16"/><path d="M10 32C5 16 25 7 42 5c0 21-9 35-24 31" fill="currentColor" fill-opacity=".75"/></symbol>
 <symbol id="moon" viewBox="0 0 48 48"><path d="M22 4a20 20 0 1 0 22 28A20 20 0 0 1 22 4Z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="people" viewBox="0 0 48 48"><circle cx="16" cy="14" r="7" fill="currentColor" stroke="none"/><circle cx="34" cy="16" r="6" fill="currentColor" stroke="none"/><path d="M3 43V33c0-13 25-13 25 0v10M31 25c12-2 15 5 15 12v6H32" fill="currentColor" stroke="none"/></symbol>
+<symbol id="bolt" viewBox="0 0 48 48"><path d="M28 3 10 27h13l-3 18 18-25H25Z"/></symbol>
+<symbol id="energy-icon" viewBox="0 0 48 48"><rect x="6" y="4" width="36" height="40" rx="6"/><path d="M13 13h22M14 34v-9m10 9V18m10 16V22"/></symbol>
 </defs></svg>
 <main class="dashboard">
 <section class="surface hero" aria-label="Vitovent 300-F Luftkreislauf">
@@ -97,10 +106,14 @@ html,body{width:100%;height:100%;overflow:hidden}
 <article class="surface metric flow-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#wind"/></svg><div><h2>Volumenstrom Zuluft</h2><div class="metric-value" id="flow">—</div></div></div><div class="track" id="flowTrack" hidden><div class="fill" id="flowBar"></div></div><div class="metric-note" id="flowNote">Einheit aus Quellprofil</div><svg class="waves" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="waveShade" x2="0" y2="1"><stop stop-color="#039bdf" stop-opacity=".3"/><stop offset="1" stop-color="#039bdf" stop-opacity="0"/></linearGradient></defs><path d="M0 68C75 58 66 6 135 25S243 109 310 73 366 43 400 49V110H0Z" fill="url(#waveShade)" stroke="#006ba2"/><path d="M0 90C50 84 62 36 120 42S237 110 302 83 358 60 400 62" fill="none" stroke="#1ac4ff" stroke-width="2"/><path d="M0 35C68 25 74-3 126 10S226 80 295 48 349 37 400 23" fill="none" stroke="#00669c"/></svg><div class="art-note">Luftstrom · schematisch</div></article>
 <article class="surface metric filter-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#filter-icon"/></svg><div><h2>Filter</h2><div class="metric-note">Restlaufzeit</div><div class="metric-value" id="filter">—</div></div></div><div class="track" id="filterTrack" hidden><div class="fill" id="filterBar"></div></div><div class="metric-note" id="filterNote">Einheit aus Quellprofil</div></article>
 <article class="surface metric mode-panel"><div class="mode-heading"><svg class="icon"><use href="#fan"/></svg><h2>Betriebsart Lüftung</h2></div><div class="mode-buttons" id="modeButtons" role="group" aria-label="Betriebsart wählen"><div class="mode-empty">Auswahl wird geladen …</div></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p><button class="diagnosis" id="diagnosis" type="button" aria-expanded="false" aria-controls="diagnosticOutput">Diagnose anzeigen</button><pre class="diagnostic-output" id="diagnosticOutput" hidden></pre></article>
-</section><footer class="footer"><span id="sourceState">Vorhandene Symcon-Variablen</span><span id="updated">Noch keine Aktualisierung</span></footer>
+</section><section class="power-metrics" aria-label="Stromverbrauch der Lüftung">
+<article class="surface metric power-panel" data-history="power"><div class="metric-heading"><svg class="icon metric-icon"><use href="#bolt"/></svg><div><h2>Momentanleistung</h2><div class="metric-value" id="power">—</div><div class="metric-note" id="powerNote">Einheit aus Quellprofil</div></div></div><div class="history-hint">Verlauf öffnen</div></article>
+<article class="surface metric energy-panel" data-history="energy"><div class="metric-heading"><svg class="icon metric-icon"><use href="#energy-icon"/></svg><div><h2>Gesamtverbrauch</h2><div class="metric-value" id="energy">—</div><div class="metric-note" id="energyNote">Einheit aus Quellprofil</div></div></div><div class="history-hint">Verlauf öffnen</div></article>
+</section>
+<footer class="footer"><span id="sourceState">Vorhandene Symcon-Variablen</span><span id="updated">Noch keine Aktualisierung</span></footer>
 </main>
 <dialog id="historyDialog" class="history-dialog" aria-labelledby="historyTitle">
-<div class="history-header"><div><h2 id="historyTitle">Temperaturverlauf</h2><span class="metric-note">Archivierte Temperatur · °C</span></div><button type="button" id="historyClose" aria-label="Diagramm schließen">✕</button></div>
+<div class="history-header"><div><h2 id="historyTitle">Temperaturverlauf</h2><span class="metric-note" id="historyUnit">Archivierte Messwerte</span></div><button type="button" id="historyClose" aria-label="Diagramm schließen">✕</button></div>
 <div class="history-toolbar"><label for="historyRange">Zeitraum <select id="historyRange"><option value="86400">24 Stunden</option><option value="604800">7 Tage</option><option value="2592000">30 Tage</option><option value="31536000">365 Tage</option></select></label><div class="history-navigation"><button type="button" id="historyPrevious" aria-label="Vorheriger Zeitraum">← Zurück</button><button type="button" id="historyNow">Jetzt</button><button type="button" id="historyNext" aria-label="Nächster Zeitraum">Weiter →</button></div></div>
 <p id="historyWindow" class="history-window"></p>
 <p id="historyStatus" class="history-status" role="status" aria-live="polite"></p>
@@ -186,10 +199,15 @@ function render(data) {
             byId(key + 'Track').setAttribute('aria-valuenow', Math.min(range.max, Math.max(range.min, entry.value)));
         }
     }
+    for (const key of ['power', 'energy']) {
+        const entry = data.values[key];
+        byId(key).textContent = entry.formatted;
+        byId(key + 'Note').textContent = entry.value === null ? 'Quellvariable nicht verfügbar' : entry.hasUnit ? 'Originalwert aus IP-Symcon' : 'Quellprofil ohne Einheit';
+    }
     byId('headerMode').textContent = data.values.mode.formatted;
     byId('availability').dataset.complete = String(data.missing.length === 0);
     byId('status').textContent = data.missing.length ? 'Daten unvollständig' : 'Betriebsart';
-    byId('sourceState').textContent = data.missing.length ? 'Nicht verfügbar: ' + data.missing.join(', ') : 'IP-Symcon · 7 Quellvariablen';
+    byId('sourceState').textContent = data.missing.length ? 'Nicht verfügbar: ' + data.missing.join(', ') : 'IP-Symcon · 9 Quellvariablen';
     byId('sourceState').classList.toggle('missing', data.missing.length > 0);
     const stamps = Object.values(data.values).map(v => v.updated).filter(v => v > 0);
     byId('updated').textContent = stamps.length ? 'Letztes Quellupdate: ' + new Date(Math.max(...stamps) * 1000).toLocaleString('de-DE') : 'Noch kein Quellzeitstempel';
@@ -278,8 +296,8 @@ let historyId = '';
 let historyCounter = 0;
 let historyTimer = null;
 let historyPlot = null;
-const temperatureNames = {outside: 'Außenluft', supply: 'Zuluft', extract: 'Abluft', exhaust: 'Fortluft'};
-const temperatureColors = {outside: '#18bcff', supply: '#27eda1', extract: '#ffd34d', exhaust: '#ff6878'};
+const historyNames = {outside: 'Außenluft', supply: 'Zuluft', extract: 'Abluft', exhaust: 'Fortluft', power: 'Momentanleistung', energy: 'Gesamtverbrauch'};
+const historyColors = {outside: '#18bcff', supply: '#27eda1', extract: '#ffd34d', exhaust: '#ff6878', power: '#ffd16c', energy: '#b9a2ff'};
 function historyDuration() { return Number(byId('historyRange').value); }
 function historyControls() {
     byId('historyRange').disabled = historyBusy;
@@ -291,7 +309,9 @@ function openHistory(key) {
     if (!current || !current.values[key] || current.values[key].value === null) return;
     historyKey = key;
     historyEnd = Math.floor(Date.now() / 1000);
-    byId('historyTitle').textContent = temperatureNames[key] + ' · Temperaturverlauf';
+    byId('historyTitle').textContent = historyNames[key] + ' · Verlauf';
+    byId('historyUnit').textContent = 'Archivierte Messwerte';
+    byId('historyChart').setAttribute('aria-label', historyNames[key] + ' im Zeitverlauf');
     if (!historyDialog.open) historyDialog.showModal();
     loadHistory();
 }
@@ -305,7 +325,7 @@ function loadHistory() {
     if (typeof requestAction !== 'function') {
         historyBusy = false;
         historyControls();
-        byId('historyStatus').textContent = 'Temperaturverlauf nur innerhalb der Symcon-Kachel verfügbar.';
+        byId('historyStatus').textContent = 'Verlauf nur innerhalb der Symcon-Kachel verfügbar.';
         return;
     }
     historyId = 'history_' + Date.now() + '_' + (++historyCounter);
@@ -334,6 +354,7 @@ function receiveHistory(data) {
     historyBusy = false;
     historyControls();
     if (data.error) { historyFailed(data.error, historyId); return; }
+    byId('historyUnit').textContent = data.kind === 'consumption' ? 'Verbrauch pro Archivintervall · ' + (data.unit || 'Quelleneinheit') : data.kind === 'level' ? 'Zählerstand · ' + (data.unit || 'Quelleneinheit') : 'Archivierte Messwerte · ' + (data.unit || (['power', 'energy'].includes(historyKey) ? 'Quelleneinheit' : '°C'));
     const points = Array.isArray(data.points) ? data.points.filter(p => Number.isFinite(p.time) && Number.isFinite(p.value)) : [];
     if (!points.length) {
         byId('historyStatus').textContent = 'Keine archivierten Werte in diesem Zeitraum. Bitte einen anderen Zeitraum wählen oder die Protokollierung prüfen.';
@@ -360,16 +381,21 @@ function drawHistory(points, data) {
     chart.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
     const lowest = points.reduce((min, p) => Math.min(min, p.value), Infinity);
     const highest = points.reduce((max, p) => Math.max(max, p.value), -Infinity);
-    const padding = Math.max(.5, (highest - lowest) * .12);
-    const min = lowest - padding;
+    const padding = Math.max(historyKey === 'energy' ? .001 : .5, (highest - lowest) * .12);
+    const min = data.kind === 'consumption' ? 0 : lowest - padding;
     const max = highest + padding;
-    const x = time => 55 + (time - data.start) / (data.end - data.start) * (width - 70);
+
     const y = value => height - 40 - (value - min) / (max - min) * (height - 60);
-    const color = temperatureColors[historyKey];
+    const color = historyColors[historyKey];
+    const formatValue = value => Number(value).toLocaleString('de-DE', {maximumFractionDigits: historyKey === 'energy' ? 4 : historyKey === 'power' ? 2 : 1});
+    const unit = data.unit || (['power', 'energy'].includes(historyKey) ? '' : '°C');
+    const labelLength = Math.max(...Array.from({length: 5}, (_, i) => (formatValue(min + (max - min) * i / 4) + ' ' + unit).length));
+    const left = Math.min(width * .45, Math.max(55, labelLength * 8 + 12));
+    const x = time => left + (time - data.start) / (data.end - data.start) * (width - left - 15);
     for (let i = 0; i <= 4; i++) {
         const value = min + (max - min) * i / 4;
-        chart.appendChild(chartElement('line', {x1: 55, x2: width - 15, y1: y(value), y2: y(value), stroke: '#24435b'}));
-        chart.appendChild(chartElement('text', {x: 45, y: y(value) + 4, 'text-anchor': 'end', fill: '#a5c8df', 'font-size': 12}, number(value) + '°'));
+        chart.appendChild(chartElement('line', {x1: left, x2: width - 15, y1: y(value), y2: y(value), stroke: '#24435b'}));
+        chart.appendChild(chartElement('text', {x: left - 10, y: y(value) + 4, 'text-anchor': 'end', fill: '#a5c8df', 'font-size': 12}, formatValue(value) + (unit ? ' ' + unit : '')));
         if (width < 500 && i % 2 !== 0) continue;
         const timestamp = data.start + (data.end - data.start) * i / 4;
         const date = new Date(timestamp * 1000);
@@ -382,21 +408,24 @@ function drawHistory(points, data) {
         previous = p.time;
         return command + x(p.time).toFixed(2) + ',' + y(p.value).toFixed(2);
     }).join(' ');
-    chart.appendChild(chartElement('path', {d: path, fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round'}));
+    if (data.kind !== 'consumption') chart.appendChild(chartElement('path', {d: path, fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round'}));
     for (const point of points) {
-        const dot = chartElement('circle', {cx: x(point.time), cy: y(point.value), r: 3, fill: color, class: 'history-point'});
-        dot.appendChild(chartElement('title', {}, new Date(point.time * 1000).toLocaleString('de-DE') + ': ' + number(point.value) + ' °C'));
+        const dot = data.kind === 'consumption' ? chartElement('rect', {
+            x: x(point.time), y: y(point.value), width: Math.max(.5, (x(Math.min(data.end, point.time + (point.duration > 0 ? point.duration : data.step))) - x(point.time)) * .8),
+            height: Math.max(0, y(0) - y(point.value)), fill: color, class: 'history-bar'
+        }) : chartElement('circle', {cx: x(point.time), cy: y(point.value), r: 3, fill: color, class: 'history-point'});
+        dot.appendChild(chartElement('title', {}, new Date(point.time * 1000).toLocaleString('de-DE') + ': ' + formatValue(point.value) + (unit ? ' ' + unit : '')));
         chart.appendChild(dot);
     }
     chart.removeAttribute('hidden');
 }
-for (const [key, name] of Object.entries(temperatureNames)) {
-    const card = document.querySelector('.air.' + key);
+for (const [key, name] of Object.entries(historyNames)) {
+    const card = document.querySelector(key === 'power' || key === 'energy' ? '.' + key + '-panel' : '.air.' + key);
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-haspopup', 'dialog');
-    card.setAttribute('aria-label', name + ': Temperaturverlauf öffnen');
-    card.setAttribute('title', 'Temperaturverlauf öffnen');
+    card.setAttribute('aria-label', name + ': Verlauf öffnen');
+    card.setAttribute('title', 'Verlauf öffnen');
     card.addEventListener('click', () => openHistory(key));
     card.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openHistory(key); }

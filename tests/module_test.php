@@ -30,12 +30,13 @@ function privateValue($module, $name) {
 }
 check(IPS_GetInstance($id)['InstanceVisualizationType'] === 1, 'HTML visualization type');
 check(IPS_GetProperty($id, 'ModeID') === 54849, 'original defaults');
-check(count(snapshot($module)['missing']) === 7, 'empty installation is honest');
+check(IPS_GetProperty($id, 'PowerID') === 48602 && IPS_GetProperty($id, 'EnergyID') === 50335, 'electricity IDs from user screenshot');
+check(count(snapshot($module)['missing']) === 9, 'empty installation is honest');
 check(IPS_GetInstance($id)['InstanceStatus'] === 104, 'incomplete status');
 $form = json_decode(IPS_GetConfigurationForm($id), true, 512, JSON_THROW_ON_ERROR);
-check(count(array_filter($form['elements'], function ($e) { return $e['type'] === 'SelectVariable'; })) === 7, 'seven selectors');
+check(count(array_filter($form['elements'], function ($e) { return $e['type'] === 'SelectVariable'; })) === 9, 'nine selectors');
 $ids = [];
-foreach (['OutsideID','SupplyID','ExtractID','ExhaustID','FlowID','FilterID','ModeID'] as $property) {
+foreach (['OutsideID','SupplyID','ExtractID','ExhaustID','FlowID','FilterID','ModeID','PowerID','EnergyID'] as $property) {
     $v = IPS_CreateVariable($property === 'ModeID' ? 1 : 2);
     $ids[$property] = $v;
     IPS_SetProperty($id, $property, $v);
@@ -52,7 +53,7 @@ IPS_SetVariableCustomProfile($ids['FilterID'], 'Fixture.Filter');
 IPS_ApplyChanges($id);
 check(count(snapshot($module)['missing']) === 0, 'all sources read');
 check(IPS_GetInstance($id)['InstanceStatus'] === 102, 'active status');
-check(count(IPS_GetReferenceList($id)) === 7, 'source references registered');
+check(count(IPS_GetReferenceList($id)) === 9, 'source references registered');
 $messages = privateValue($module, 'messageRegistrations');
 check(in_array(IPS_KERNELSTARTED, $messages[0], true), 'restart subscribed');
 check(in_array(VM_UPDATE, $messages[$mode], true), 'updates subscribed');
@@ -115,7 +116,7 @@ IPS_ApplyChanges($id);
 check(!in_array($old, IPS_GetReferenceList($id), true), 'old reference removed');
 check(!isset(privateValue($module, 'messageRegistrations')[$old]), 'old events removed');
 IPS_ApplyChanges($id);
-check(count(IPS_GetReferenceList($id)) === 7, 'apply repeatable');
+check(count(IPS_GetReferenceList($id)) === 9, 'apply repeatable');
 IPS_DeleteVariable($new);
 $module->MessageSink(time(), $new, VM_DELETE, []);
 check(in_array('Außenluft', snapshot($module)['missing'], true), 'deleted variable unavailable');
@@ -245,6 +246,57 @@ $empty = array_merge($query, ['start' => $base - 7200, 'end' => $base - 3600]);
 $reply = historyReply($module, $empty);
 check($reply['error'] === '' && $reply['points'] === [], 'empty history is not fabricated');
 check(AC_GetLoggingStatus($archive, $old), 'history requests preserve logging configuration');
+// Electric power is a gauge; total energy may be archived as a real counter.
+check(IPS_GetProperty($id, 'PowerID') === $ids['PowerID'], 'power source configured');
+check(IPS_GetProperty($id, 'EnergyID') === $ids['EnergyID'], 'energy source configured');
+IPS_CreateVariableProfile('Fixture.Power', 2);
+IPS_SetVariableProfileText('Fixture.Power', '', ' W');
+IPS_SetVariableCustomProfile($ids['PowerID'], 'Fixture.Power');
+IPS_CreateVariableProfile('Fixture.Energy', 2);
+IPS_SetVariableProfileText('Fixture.Energy', '', ' kWh');
+IPS_SetVariableCustomProfile($ids['EnergyID'], 'Fixture.Energy');
+SetValue($ids['PowerID'], 37.0);
+SetValue($ids['EnergyID'], 952.6);
+$module->Refresh();
+check((float) snapshot($module)['values']['power']['value'] === 37.0, 'power live updates');
+check(snapshot($module)['values']['energy']['value'] === 952.6, 'total energy live updates');
+check(snapshot($module)['values']['power']['unit'] === 'W', 'power unit from source profile');
+check(snapshot($module)['values']['energy']['unit'] === 'kWh', 'energy unit from source profile');
+AC_SetLoggingStatus($archive, $ids['PowerID'], true);
+AC_StubsAddAggregatedValues($archive, $ids['PowerID'], 0, [['TimeStamp' => $base, 'Duration' => 3600, 'Avg' => 37.0]]);
+$powerQuery = array_merge($query, ['key' => 'power']);
+$reply = historyReply($module, $powerQuery);
+check($reply['error'] === '' && (float) $reply['points'][0]['value'] === 37.0, 'power history reads actual mean power');
+check($reply['unit'] === 'W' && $reply['kind'] === 'average', 'power history has correct unit and meaning');
+AC_SetAggregationType($archive, $ids['PowerID'], 1);
+check(historyReply($module, $powerQuery)['error'] !== '', 'counter power is rejected');
+AC_SetAggregationType($archive, $ids['PowerID'], 0);
+AC_SetLoggingStatus($archive, $ids['EnergyID'], true);
+AC_SetAggregationType($archive, $ids['EnergyID'], 1);
+AC_StubsAddAggregatedValues($archive, $ids['EnergyID'], 0, [
+    ['TimeStamp' => $base, 'Duration' => 3600, 'Avg' => .037],
+    ['TimeStamp' => $base + 3600, 'Duration' => 3600, 'Avg' => .041]
+]);
+$energyQuery = array_merge($query, ['key' => 'energy']);
+$reply = historyReply($module, $energyQuery);
+check($reply['error'] === '' && $reply['kind'] === 'consumption', 'counter energy supports consumption history');
+check(array_column($reply['points'], 'value') === [.037, .041], 'counter deltas preserved without summing or averaging them');
+check($reply['points'][0]['duration'] === 3600, 'counter interval duration comes from archive');
+check($reply['unit'] === 'kWh' && strpos($reply['aggregation'], 'Zählerdifferenzen') !== false, 'counter history labeled as interval consumption');
+AC_StubsAddAggregatedValues($archive, $ids['EnergyID'], 1, [['TimeStamp' => $day, 'Duration' => 86400, 'Avg' => .888]]);
+$reply = historyReply($module, array_merge($long, ['key' => 'energy']));
+check($reply['step'] === 86400 && $reply['points'][0]['value'] === .888, 'daily counter consumption uses daily archived delta');
+$standardEnergy = IPS_CreateVariable(2);
+IPS_SetVariableCustomProfile($standardEnergy, 'Fixture.Energy');
+AC_SetLoggingStatus($archive, $standardEnergy, true);
+AC_StubsAddAggregatedValues($archive, $standardEnergy, 0, [['TimeStamp' => $base, 'Duration' => 3600, 'Avg' => 951.8]]);
+IPS_SetProperty($id, 'EnergyID', $standardEnergy);
+IPS_ApplyChanges($id);
+$reply = historyReply($module, $energyQuery);
+check($reply['kind'] === 'level' && $reply['points'][0]['value'] === 951.8, 'standard energy history remains a total-meter level');
+check(strpos($reply['aggregation'], 'Zählerstands') !== false, 'total level is not mislabeled as interval consumption');
+IPS_SetProperty($id, 'EnergyID', $ids['EnergyID']);
+IPS_ApplyChanges($id);
 if (!is_dir(__DIR__ . '/output')) { mkdir(__DIR__ . '/output', 0777, true); }
 file_put_contents(__DIR__ . '/output/tile.html', $module->GetVisualizationTile());
 file_put_contents(__DIR__ . '/output/snapshot.json', json_encode(snapshot($module), JSON_THROW_ON_ERROR));
