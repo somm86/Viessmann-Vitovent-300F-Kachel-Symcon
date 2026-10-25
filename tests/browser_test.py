@@ -1,4 +1,4 @@
-"""HTML-SDK bridge is simulated; this is not a running Symcon frontend."""
+"""UI and official void-return HTML-SDK bridge simulation; no real Symcon frontend."""
 import copy
 import json
 import os
@@ -22,61 +22,79 @@ with sync_playwright() as p:
     if os.environ.get('CHROMIUM_PATH'):
         options['executable_path'] = os.environ['CHROMIUM_PATH']
     browser = p.chromium.launch(**options)
-    page = browser.new_page(viewport={'width': 1180, 'height': 850}, device_scale_factor=1)
+    page = browser.new_page(viewport={'width': 1536, 'height': 1024}, device_scale_factor=1)
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.route('**/*', lambda route: route.abort())
-    page.goto("about:blank")
+    page.goto('about:blank')
     page.set_content(html)
-    check(page.locator('#modeSelect').is_disabled(), 'outside SDK: read only')
-    page.evaluate("() => { window.calls = []; window.requestAction = (ident, value) => { calls.push({ident, value}); return Promise.resolve(); }; }")
-    page.wait_for_function("!document.getElementById('modeSelect').disabled")
-    check(page.locator('#modeSelect').is_enabled(), 'late SDK bridge activates control')
-    page.evaluate('handleMessage', json.dumps(snapshot))
-    check(page.locator('#modeSelect').is_enabled(), 'SDK with real profile permits selection')
-    check(page.locator('#modeSelect option').count() == 2, 'only profile associations shown')
+    buttons = page.locator('#modeButtons button')
+    check(buttons.first.is_disabled(), 'outside SDK: read only')
+    # The official SDK is void-return, not Promise-return.
+    page.evaluate("() => { window.calls = []; window.requestAction = (ident, value) => { calls.push({ident, value}); }; }")
+    page.wait_for_function("!document.querySelector('#modeButtons button').disabled")
+    check(buttons.first.is_enabled(), 'late SDK bridge activates control')
+    check(buttons.count() == 2, 'only actual profile choices become mode tiles')
     check('h' in page.locator('#filter').inner_text(), 'profile unit retained')
-    page.locator('#modeSelect').select_option('9.5')
+    buttons.nth(1).click()
     check(page.evaluate('calls') == [{'ident': 'ChangeMode', 'value': 9.5}], 'typed SDK request')
-    check(page.locator('#modeSelect').is_disabled(), 'pending disables duplicate requests')
+    check(buttons.first.is_disabled(), 'pending disables duplicate requests')
     check(page.locator('#modeLabel').inner_text() == snapshot['values']['mode']['formatted'], 'no optimistic mode label')
+    check(buttons.first.get_attribute('aria-pressed') == 'true', 'pending does not highlight unconfirmed value')
     confirmed = copy.deepcopy(snapshot)
     confirmed['values']['mode'].update(value=9.5, formatted='Testmodus B')
     confirmed['values']['outside']['value'] = -3.2
     page.evaluate('handleMessage', json.dumps(confirmed))
-    check(page.locator('#modeSelect').is_enabled(), 'source update confirms request')
+    check(buttons.first.is_enabled(), 'source update confirms request')
     check(page.locator('#modeLabel').inner_text() == 'Testmodus B', 'confirmed label shown')
+    check(buttons.nth(1).get_attribute('aria-pressed') == 'true', 'confirmed tile highlighted')
     check(page.locator('#outside').inner_text() == '-3,2', 'JSON live value applied')
-    page.evaluate("window.savedOption = document.querySelector('#modeSelect option'); void 0")
+    page.evaluate("window.savedButton = document.querySelector('#modeButtons button'); void 0")
     sensor_update = copy.deepcopy(confirmed)
     sensor_update['values']['outside']['value'] = -4.0
     page.evaluate('handleMessage', json.dumps(sensor_update))
-    check(page.evaluate("savedOption === document.querySelector('#modeSelect option')"), 'sensor update keeps selection DOM intact')
+    check(page.evaluate("savedButton === document.querySelector('#modeButtons button')"), 'sensor update preserves focused mode button')
     unknown = copy.deepcopy(confirmed)
     unknown['values']['mode'].update(value=99, formatted='Unbekannter Quellwert')
     page.evaluate('handleMessage', json.dumps(unknown))
-    check(page.locator('#modeSelect').input_value() == '', 'unknown current value selects no arbitrary mode')
+    check(page.locator('#modeButtons button[aria-pressed="true"]').count() == 0, 'unknown source mode highlights no arbitrary choice')
     hostile = copy.deepcopy(confirmed)
     hostile['mode']['choices'][0]['label'] = '<img src=x onerror=alert(1)>'
     page.evaluate('handleMessage', json.dumps(hostile))
     check(page.locator('img').count() == 0, 'labels are plain text')
+    # PHP cannot return an exception through the documented void function; it publishes an error message.
+    buttons.first.click()
+    php_error = copy.deepcopy(confirmed)
+    php_error['actionError'] = 'Fixture: Geräteaktion fehlgeschlagen'
+    page.evaluate('handleMessage', json.dumps(php_error))
+    check('Geräteaktion fehlgeschlagen' in page.locator('#feedback').inner_text(), 'PHP error reaches visible feedback')
+    check(buttons.first.is_enabled(), 'server error releases pending control')
+    page.evaluate('handleMessage', json.dumps(confirmed))
+    # Optional Promise-return bridge variants still propagate a rejection.
     page.evaluate("() => { window.requestAction = () => Promise.reject(new Error('test')); }")
-    page.locator('#modeSelect').select_option('2.5')
-    page.wait_for_function("document.getElementById('feedback').textContent.includes('fehlgeschlagen')")
-    check(page.locator('#modeSelect').is_enabled(), 'SDK rejection releases control')
-    # Reload resets action state; fake clock checks no-confirmation handling without sleeping.
-    page.goto("about:blank")
+    buttons.first.click()
+    page.wait_for_function("document.getElementById('feedback').textContent.includes('Schalten fehlgeschlagen')")
+    check(buttons.first.is_enabled(), 'optional Promise rejection releases control')
+    page.goto('about:blank')
     page.set_content(html)
     page.clock.install()
-    page.evaluate('() => { window.requestAction = () => Promise.resolve(); }')
+    page.evaluate('() => { window.requestAction = () => {}; }')
     page.evaluate('handleMessage', json.dumps(snapshot))
-    page.locator('#modeSelect').select_option('9.5')
+    page.locator('#modeButtons button').nth(1).click()
     page.clock.fast_forward(15001)
     check('Keine Bestätigung' in page.locator('#feedback').inner_text(), 'unconfirmed request times out honestly')
     readonly = copy.deepcopy(snapshot)
     readonly['mode'].update(writable=False, reason='Aktion deaktiviert')
     page.evaluate('handleMessage', json.dumps(readonly))
-    check(page.locator('#modeSelect').is_disabled(), 'action removed live')
+    check(page.locator('#modeButtons button').first.is_disabled(), 'action removed live')
+    no_choices = copy.deepcopy(readonly)
+    no_choices['mode'].update(choices=[], reason='Keine Auswahlwerte hinterlegt')
+    page.evaluate('handleMessage', json.dumps(no_choices))
+    check(page.locator('#modeButtons button').count() == 0, 'missing choices do not invent four preset modes')
+    check('Keine Betriebsarten' in page.locator('#modeButtons').inner_text(), 'empty configuration has clear state')
+    page.locator('#diagnosis').click()
+    check(page.locator('#diagnosticOutput').is_visible(), 'actual configuration diagnosis is available')
+    check(json.loads(page.locator('#diagnosticOutput').inner_text())['choices'] == [], 'diagnosis contains actual empty choices')
     missing = copy.deepcopy(readonly)
     missing['missing'] = ['Außenluft']
     missing['values']['outside']['value'] = None
@@ -85,22 +103,47 @@ with sync_playwright() as p:
     check(page.locator('#status').inner_text() == 'Daten unvollständig', 'partial data shown')
     page.evaluate('handleMessage', 'bad json')
     check('nicht gelesen' in page.locator('#feedback').inner_text(), 'malformed message handled')
-    # Explicitly synthetic presentation data for the checked-in screenshot.
+    # Actual enumeration data can include strings and booleans. No numeric coercion.
+    page.evaluate('() => { window.calls = []; window.requestAction = (ident, value) => { calls.push({ident, value}); }; }')
+    string_mode = copy.deepcopy(snapshot)
+    string_mode['mode']['choices'] = [{'value': 'fixture-a', 'label': 'Fixture A'}, {'value': 'fixture-b', 'label': 'Fixture B'}]
+    string_mode['values']['mode']['value'] = 'fixture-a'
+    page.evaluate('handleMessage', json.dumps(string_mode))
+    page.locator('#modeButtons button').nth(1).click()
+    check(page.evaluate('calls[0].value') == 'fixture-b', 'string enumeration preserves type in SDK request')
+    boolean_mode = copy.deepcopy(snapshot)
+    boolean_mode['mode']['choices'] = [{'value': False, 'label': 'Fixture false'}, {'value': True, 'label': 'Fixture true'}]
+    boolean_mode['values']['mode']['value'] = 'fixture-b'  # Finish previous pending request first.
+    page.evaluate('handleMessage', json.dumps(boolean_mode))
+    boolean_mode['values']['mode']['value'] = False
+    page.evaluate('handleMessage', json.dumps(boolean_mode))
+    page.locator('#modeButtons button').nth(1).click()
+    check(page.evaluate('calls[1].value') is True, 'boolean enumeration preserves type in SDK request')
+    # Explicit synthetic screenshot fixture; never installed as production modes or ranges.
     demo = copy.deepcopy(snapshot)
-    for key, value in {'outside': 6.4, 'supply': 20.1, 'extract': 22.8, 'exhaust': 9.2}.items():
+    for key, value in {'outside': 15.6, 'supply': 22.3, 'extract': 22.4, 'exhaust': 16.8}.items():
         demo['values'][key]['value'] = value
-    demo['values']['flow'].update(value=168, formatted='168 m³/h', hasUnit=True)
-    demo['values']['filter'].update(value=1420, formatted='1.420 h', hasUnit=True)
-    page.goto("about:blank")
+    demo['values']['flow'].update(value=85, formatted='85 m³/h', hasUnit=True, range={'min': 0, 'max': 200})
+    demo['values']['filter'].update(value=281, formatted='281 Tage', hasUnit=True, range={'min': 0, 'max': 365})
+    demo['values']['mode'].update(value=-701, formatted='Grundbetrieb')
+    demo['mode']['choices'] = [
+        {'value': -701, 'label': 'Grundbetrieb'}, {'value': -702, 'label': 'Reduziert'},
+        {'value': -703, 'label': 'Intensiv'}, {'value': -704, 'label': 'Party'}]
+    page.goto('about:blank')
     page.set_content(html)
-    page.evaluate('() => { window.requestAction = () => Promise.resolve(); }')
+    page.evaluate('() => { window.requestAction = () => {}; }')
+    # No source range means no made-up percent gauge.
+    page.evaluate('handleMessage', json.dumps(snapshot))
+    check(page.locator('#flowTrack').is_hidden(), 'missing source range hides flow bar')
+    check(page.locator('#filterTrack').is_hidden(), 'missing source range hides filter bar')
     page.evaluate('handleMessage', json.dumps(demo))
-    for width in [1180, 700, 360, 320]:
-        page.set_viewport_size({'width': width, 'height': 950})
+    check(page.locator('#flowBar').evaluate('el => el.style.width') == '42.5%', 'bar uses actual supplied source range')
+    for width in [1536, 1180, 800, 700, 360, 320]:
+        page.set_viewport_size({'width': width, 'height': 1024})
         check(page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'no overflow at {width}px')
-        for selector in ['#outside', '#supply', '#extract', '#exhaust', '#modeSelect']:
+        for selector in ['#outside', '#supply', '#extract', '#exhaust', '#modeButtons']:
             check(page.locator(selector).is_visible(), f'{selector} visible at {width}px')
-        if width in [1180, 360]:
+        if width in [1536, 360]:
             page.screenshot(path=str(ROOT / f'tests/output/dashboard-{width}.png'), full_page=True, animations='disabled')
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()

@@ -1,35 +1,32 @@
-# Prüfbericht · 25. Oktober 2026
+# Prüfbericht · Version 1.2 · 25. Oktober 2026
 
 ## Ergebnis und Reichweite
 
-Das Repository und das lokale Modul-ZIP sind vorbereitet und automatisiert geprüft. Eine tatsächliche Installation in IP-Symcon, ein Test der echten Variablen und ein Schaltvorgang an einer Vitovent 300-F waren in der Cloud **nicht verfügbar**. „Installierbar“ bezeichnet hier die geprüfte Bibliotheks-/Modulstruktur und Verpackung; es wird keine bereits erfolgte Abnahme auf dem Zielsystem behauptet.
+Das Dashboard wurde an die Bildvorlage angepasst. Der gemeldete Fehler „keine passenden Profil-Assoziationen“ ist durch die bisherige Beschränkung auf klassische Profile erklärbar. Version 1.2 liest zusätzlich echte Optionen einer modernen Darstellung „Aufzählung“. Dass Variable 54849 tatsächlich diese Darstellung besitzt, ist ohne Diagnose der Zielanlage noch nicht bestätigt. Es werden keine Schaltwerte erfunden.
 
 ## Ausgeführte Prüfungen
 
 | Prüfung | Ergebnis | Umfang |
 |---|---|---|
 | PHP-Syntax | bestanden | PHP 8.4.24, Modul, Diagnose und PHP-Testdateien |
-| Manifeste | bestanden | JSON, erforderliche Felder/Typen, URLs, GUID-Format und Identität zum Ausgangsarchiv, Klassenname, Präfix und Modul-Typ |
-| Offizielle SymconStubs | **48 Assertions bestanden** | Lifecycle, Standard-IDs, sieben Konfigurationsfelder, Teil-/Vollstatus, Referenzen und Nachrichten, wiederholtes Übernehmen, Quellwechsel, Löschung, Kernelstart-Nachricht |
-| Werte und Aktionen | in den 48 Assertions enthalten | JSON-String-Push, geänderte Werte, unverändertes Polling, Filtereinheit aus Profil, Standard-/Customprofil-Priorität, Instanz- und Skriptaktion, Integer-/Floattyp, keine künstliche Quellbestätigung, CustomAction=1, entfernter Profilwert, ungültige Werte und Skriptabschluss im Profiltext |
-| Browser | **45 Assertions bestanden** | Chromium 154.0.8037.57, simulierte SDK-Funktion, initiale Werte, JSON-Push, spät verfügbarer SDK-Bridge, nur Profiloptionen, stabiler Auswahl-DOM bei Sensorupdates, Übergabe des numerischen Werts, Quellenbestätigung, Ablehnung und 15-Sekunden-Timeout, fehlende Daten, unzulässiges JSON und sichere Profiltexte |
-| Responsive Darstellung | in den 45 Assertions enthalten | 1180, 700, 360 und 320 px; alle Temperaturen und Steuerung sichtbar, kein horizontaler Überlauf; Desktop-/Mobil-Screenshots visuell geprüft |
-| Import des vollständigen Repositorys | bestanden | Offizieller LibraryLoader lädt die Repository-Wurzel inklusive Downloadpaketen unter `docs`; keine zusätzliche Modulzuordnung |
-| Import des entpackten ZIPs | bestanden | Offizieller LibraryLoader lädt die gesamte Bibliothek, erstellt eine Instanz und rendert die initiale Kachel; fehlende echte Quellen korrekt als Status 104 |
-| Installations-ZIP | bestanden | CRC, erwartete Bibliothekswurzel, bytegleiche Nutzdateien und SHA-256; nochmaliger Build auf Bytegleichheit geprüft |
+| Manifeste | bestanden | Felder, JSON, URLs, GUIDs unverändert zum Ausgangsarchiv, Klasse, Präfix und Typ |
+| Offizielle SymconStubs | **68 Assertions bestanden** | Lifecycle, Defaults, Formular, Referenzen, Nachrichten, Re-Apply, Quellwechsel/-löschung, Kernelstart, Daten-Push und unverändertes Polling |
+| Auswahl und Aktionen | in den 68 Assertions enthalten | Profile und deren Priorität; moderne Aufzählung ohne Legacy-Assoziationen; ausschließlich echte Werte; Vorrang moderner Darstellung vor alten Profilfeldern; entfernte/ungültige Werte; Integer/Float/Bool/String; Instanz-/Skriptaktion; CustomAction=1; Weitergabe von PHP-Fehlern im Snapshot; Diagnose; sichere Texte |
+| Browser | **69 Assertions bestanden** | Chromium 154.0.8037.57; dokumentierte void-Bridge simuliert; Betriebsart-Buttons, typgetreuer Request, kein vorzeitiger Aktivzustand, Quellbestätigung, PHP-Fehler-Push, optionale Promise-Ablehnung, Timeout, Diagnose, fehlende Auswahl, keine erfundenen Buttons, Bool/String, Quellbereichsbalken und versteckte Balken ohne Grenzen |
+| Responsive Darstellung | in den 69 Assertions enthalten | 1536, 1180, 800, 700, 360 und 320 px; kein horizontaler Überlauf, vier Temperaturen und Steuerung sichtbar; Desktop und Mobil visuell geprüft |
+| Import des vollständigen Repositorys | bestanden | Offizieller LibraryLoader lädt Repository-Wurzel einschließlich Downloads unter `docs`, erzeugt genau ein Modul |
+| Import des Installations-ZIPs | bestanden | Ganze Bibliothek importiert, Instanz erstellt, initiale Kachel und Formular erzeugt |
+| ZIP-Build | bestanden | CRC, bytegleiche Nutzdateien, Bibliothekswurzel und SHA-256; wiederholte Builds reproduzierbar |
+| Offizielle Online-Dokumentation | geprüft | HTML-SDK, `requestAction` mit void-Rückgabe, wirksame Variablendarstellung und Aufzählungsoptionen; Links in [API.md](API.md) |
 
-Prüfstand der offiziellen Stubs: `31f2e0478eb3763236fcf44ea4144271fdeddfd5`. PHP-Deprecation-Hinweise aus deren Reflection-Nutzung unter PHP 8.4 werden im Test unterdrückt; Warnungen/Fehler werden zu Exceptions. Testdaten/Profilwerte sind ausschließlich Fixtures und werden nicht in das Laufzeitmodul übernommen. Das Diagnosewerkzeug liest reale Profile erst bei Ausführung auf dem Zielserver.
+Stubs-Prüfstand: `31f2e0478eb3763236fcf44ea4144271fdeddfd5`. Veraltete Reflection-APIs der Stubs erzeugen unter PHP 8.4 Deprecation-Hinweise; nur diese Kategorie wird im Test unterdrückt. Warnungen/Fehler werden zu Exceptions. Screenshot- und Testauswahlwerte sind ausdrücklich synthetische Fixtures und nicht im Produktionsmodul hinterlegt.
 
-## Nicht verifiziert / notwendige Zielsystem-Abnahme
+## Nicht verifiziert
 
-- IP-Symcon-Dienst, Bibliotheksimport, Instanzerstellung und HTML-SDK-Transport in der tatsächlichen Kachelvisualisierung.
-- Betrieb auf der angegebenen Mindestversion 7.1 und deren eingebetteter PHP-/Browser-Version. Lokale Syntax-/Verhaltenstests liefen auf PHP 8.4; GitHub-CI ist für PHP 8.2 vorbereitet, aber hier noch nicht ausgeführt.
-- Existenz, Typ, Einheiten, Skalierung, Zeitstempel und laufende Aktualisierung der sieben benannten Originalvariablen.
-- Tatsächliche Profil-Assoziationen und Aktionswerte von 54849. **Es wurde kein realer Schaltwert ermittelt, geraten oder fest eingebaut.** Ohne geeignetes klassisches Profil bleibt die Auswahl gesperrt; neuere profilfreie Darstellungen werden nicht interpretiert.
-- Fachliche Zuordnung von Profilwerten zu Gerätefunktionen und reale Gerätewirkung der Aktionsskripte/Quellinstanzen. Die Kachel vertraut ausschließlich auf die vorhandene Integration.
-- Fehler-/Promise-Verhalten des echten SDK-Bridge und Quellbestätigung bei asynchronen Geräteaktionen.
-- Dienstneustart auf dem Zielserver und unabhängige Wiederherstellung in einer neuen Cloud-Task.
-- Direkte vollständige Online-Dokumentationsprüfung (Symcon-Webseite: Proxy-403). Offizielle Git-Quellen waren lesbar; Details stehen in [API.md](API.md).
-- GitHub-Push, Module-Store-Veröffentlichung und tatsächliche Ausführung der vorbereiteten GitHub Actions.
+- Tatsächliche Profile, Präsentationsoptionen und Aktionen der sieben vorgegebenen Variablen, insbesondere 54849. Der Screenshot ist keine Ermittlung der realen Betriebsarten.
+- Tatsächlicher Symcon-Frontend-Transport und Schaltwirkung an der Anlage; dafür stehen Kachel-Diagnose, Formular-Diagnose und [Leseskript](inspect-symcon.php) bereit.
+- Installation und Lifecycle auf jeder Symcon-Version ab 7.1. Klassische Profile bleiben unterstützt; moderne Aufzählungen werden nur ausgewertet, wenn die dokumentierte API ab 8.1 vorhanden ist.
+- Reale Gerätebestätigung, Aktualisierungsverhalten der Geräteintegration und Neustart auf dem Zielserver.
+- Ausführung des GitHub-CI-Workflows und Module-Store-Veröffentlichung. GitHub-Repository und Download-ZIP sind der vorgesehene Installationsweg.
 
-Die [Installationsanleitung](INSTALLATION.md#verifikation-der-echten-anlage) enthält die konkreten Abnahmeschritte. Die fehlende Zielsystemprüfung wird nicht durch die simulierten Browser- und API-Tests ersetzt.
+Falls nach dem Update weiterhin keine Auswahl erscheint, in der Kachel „Diagnose anzeigen“ öffnen. Ohne tatsächlich hinterlegte Auswahloptionen muss die Betriebsart gesperrt bleiben; aus Wertebereichen oder Beschriftungen werden keine Schaltwerte abgeleitet. Zur Abnahme siehe [Installation](INSTALLATION.md#verifikation-der-echten-anlage).

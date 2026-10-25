@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.2 · Build 3 · 2026-10-25
+
+- Dashboard an die Bildvorlage angepasst: blaues Gerätegehäuse, leuchtende Luftströme, Außenluft/Abluft links und Zuluft/Fortluft rechts, große Messwerte und dynamische Betriebsarten-Kacheln.
+- Betriebsarten zusätzlich aus der offiziellen Darstellung „Aufzählung“ (`IPS_GetVariablePresentation`, `OPTIONS.Value/Caption`) lesen; keine erfundenen Standardmodi. Tatsächliche Werte inklusive Boolean/String typgetreu weitergeben.
+- Echte serverseitige Aktionsfehler per HTML-SDK-Push anzeigen, da `requestAction()` keinen Rückgabewert hat.
+- Diagnose in Kachel und Instanzformular ergänzt. Balken nur mit tatsächlich hinterlegten Min-/Max-Grenzen anzeigen.
+- Prüfungen um Aufzählungen ohne Profil-Assoziationen, Vorrang moderner Darstellung, typgetreue Aktionen und Fehlerweitergabe erweitert.
+
 ## Korrektur der Repository-Installation
 
 - Downloadpakete von `dist/` nach `docs/downloads/` verschoben. Symcon deutet zusätzliche Wurzelordner als Module; `docs` ist ein ausgenommener Dokumentationsordner.

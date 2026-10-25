@@ -137,6 +137,61 @@ rejects(function () use ($module) { $module->RequestAction('ChangeMode', 2.50000
 IPS_SetVariableProfileAssociation('Fixture.FloatMode', 2.5, '</script><img src=x onerror=alert(1)>', '', -1);
 $html = $module->GetVisualizationTile();
 check(strpos($html, '</script><img') === false, 'script injection escaped');
+// Regression for modern Symcon enumeration presentations without legacy associations.
+$enumMode = IPS_CreateVariable(1);
+IPS_SetVariableCustomAction($enumMode, $action);
+IPS_SetVariableCustomPresentation($enumMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => 17, 'Caption' => 'Fixture enumeration A'], ['Value' => 41, 'Caption' => 'Fixture enumeration B']])]);
+IPS_SetProperty($id, 'ModeID', $enumMode);
+IPS_ApplyChanges($id);
+check(snapshot($module)['mode']['source'] === 'Aufzählung', 'modern enumeration detected');
+check(snapshot($module)['mode']['writable'], 'no legacy associations required for enumeration');
+check(array_column(snapshot($module)['mode']['choices'], 'value') === [17, 41], 'only actual enumeration values used');
+$module->RequestAction('ChangeMode', 41);
+check($GLOBALS['captured']['VALUE'] === 41, 'enumeration uses exact integer value');
+rejects(function () use ($module) { $module->RequestAction('ChangeMode', 1); }, 'invented enumeration value');
+check(snapshot($module)['actionError'] !== '', 'PHP action errors reach SDK snapshot');
+$module->RequestAction('ChangeMode', 17);
+check(snapshot($module)['actionError'] === '', 'successful new request clears server error');
+IPS_SetVariableCustomPresentation($enumMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => 41, 'Caption' => 'Fixture enumeration B']])]);
+rejects(function () use ($module) { $module->RequestAction('ChangeMode', 17); }, 'removed enumeration value');
+check(count(snapshot($module)['mode']['choices']) === 1, 'presentation changes reflected');
+IPS_SetVariableCustomPresentation($enumMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION, 'OPTIONS' => '[]']);
+check(!snapshot($module)['mode']['writable'], 'empty enumeration is read only');
+check(strpos(snapshot($module)['mode']['reason'], (string) $enumMode) !== false, 'diagnostic identifies missing source options');
+$diagnostic = json_decode($module->GetDiagnostics(), true, 512, JSON_THROW_ON_ERROR);
+check($diagnostic['actionID'] === $action && $diagnostic['variableID'] === $enumMode, 'diagnostic has actual action and variable');
+// Verify a modern presentation overrides stale legacy associations instead of merging them.
+IPS_SetVariableCustomProfile($enumMode, 'Fixture.Mode');
+IPS_SetVariableCustomPresentation($enumMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => 41, 'Caption' => 'Fixture enumeration B']])]);
+check(array_column(snapshot($module)['mode']['choices'], 'value') === [41], 'effective presentation overrides stale legacy profile');
+rejects(function () use ($module) { $module->RequestAction('ChangeMode', 7); }, 'obsolete legacy option under enumeration');
+$boolMode = IPS_CreateVariable(0);
+IPS_SetVariableCustomAction($boolMode, $action);
+IPS_SetVariableCustomPresentation($boolMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => false, 'Caption' => 'Fixture false'], ['Value' => true, 'Caption' => 'Fixture true']])]);
+IPS_SetProperty($id, 'ModeID', $boolMode);
+IPS_ApplyChanges($id);
+$module->RequestAction('ChangeMode', true);
+check($GLOBALS['captured']['VALUE'] === true, 'boolean enumeration preserves type');
+check(snapshot($module)['values']['mode']['value'] === true, 'boolean mode displayed');
+rejects(function () use ($module) { $module->RequestAction('ChangeMode', 1); }, 'numeric value for boolean enumeration');
+$stringMode = IPS_CreateVariable(3);
+IPS_SetParent($stringMode, $target);
+IPS_SetIdent($stringMode, 'StringMode');
+IPS\VariableManager::setVariableAction($stringMode, $target);
+IPS_SetVariableCustomPresentation($stringMode, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => '', 'Caption' => 'Fixture empty string'], ['Value' => 'fixture-code', 'Caption' => 'Fixture string']])]);
+IPS_SetProperty($id, 'ModeID', $stringMode);
+IPS_ApplyChanges($id);
+$module->RequestAction('ChangeMode', 'fixture-code');
+check($GLOBALS['instanceRequest']['value'] === 'fixture-code', 'string enumeration preserves type');
+check(snapshot($module)['values']['mode']['formatted'] === 'Fixture empty string', 'string current label displayed without optimistic change');
+rejects(function () use ($module) { $module->RequestAction('ChangeMode', 'other'); }, 'unknown string value');
+IPS_SetProperty($id, 'ModeID', $floatMode);
+IPS_ApplyChanges($id);
 // Produce browser input with synthetic fixture values and actual module-generated HTML.
 IPS_SetVariableProfileAssociation('Fixture.FloatMode', 2.5, 'Testmodus A', '', -1);
 IPS_SetVariableProfileAssociation('Fixture.FloatMode', 9.5, 'Testmodus B', '', -1);

@@ -4,25 +4,37 @@
 
 | Bereich | Verwendung |
 |---|---|
-| Bibliothek | `library.json` mit unveränderter Bibliotheks-GUID, Autoren-/URL-/Versions-/Build-/Datumsfeldern und Mindestversion |
-| Modul | `module.json`: Typ 3, Klasse `Vitovent300FTile`, Präfix `VVF`, eigene unveränderte GUID, keine Parent-/Child-Anforderungen |
-| Lifecycle | `IPSModule::Create`, `ApplyChanges`, `MessageSink`; `RegisterPropertyInteger`, `RegisterMessage`, `RegisterReference`, Bereinigung eigener Quellmeldungen und Referenzen |
-| Start | `IPS_KERNELSTARTED`, Runlevel-Prüfung über `IPS_GetKernelRunlevel() === KR_READY`; Timer ruft `VVF_Refresh($_IPS["TARGET"])` auf |
-| Aktualisierung | `VM_UPDATE`, `VM_DELETE`, `VM_CHANGEPROFILENAME`, `VM_CHANGEPROFILEACTION`; 30-Sekunden-Timer für Änderungen innerhalb eines Profils und sonstige Konfigurationsänderungen |
+| Bibliothek/Modul | `library.json`, `module.json`: unveränderte GUIDs, Typ 3, Klasse `Vitovent300FTile`, Präfix `VVF`, keine Parent-/Child-Anforderungen |
+| Lifecycle | `IPSModule::Create`, `ApplyChanges`, `MessageSink`; Eigenschaften, Referenzen und eigene Quellmeldungen registrieren/bereinigen |
+| Start | `IPS_KERNELSTARTED`, Runlevel `KR_READY`, Timer über `VVF_Refresh($_IPS["TARGET"])` |
+| Aktualisierung | `VM_UPDATE`, `VM_DELETE`, `VM_CHANGEPROFILENAME`, `VM_CHANGEPROFILEACTION`; 30-Sekunden-Abgleich für Änderungen innerhalb von Profilen/Darstellungen |
 | Lesen | `IPS_VariableExists`, `IPS_GetVariable`, `GetValue`, `GetValueFormatted`, `IPS_VariableProfileExists`, `IPS_GetVariableProfile` |
-| HTML-SDK | `SetVisualizationType(1)`, `GetVisualizationTile()`, `UpdateVisualizationValue(JSON-Text)`, globale JavaScript-Funktion `handleMessage(message)` mit JSON-Parsing |
-| Schalten | JavaScript `requestAction('ChangeMode', numerischerProfilwert)` → Instanz-`RequestAction` → Prüfung des wirksamen Profils und der Aktion → globales `RequestAction(QuellID, typisierterWert)` |
+| Moderne Auswahl | Falls verfügbar: `IPS_GetVariablePresentation()` (ab 8.1), wirksame Darstellung „Aufzählung“, JSON-kodierte `OPTIONS`, ausschließlich deren `Value` und `Caption`. Bool/String/Integer/Float entsprechend dem tatsächlichen Variablentyp |
+| Klassische Auswahl | Wirksame Legacy-Darstellung bzw. auf älteren Versionen Custom-/Standardprofil; ausschließlich vorhandene Assoziationen. Moderne Darstellung hat Vorrang vor veralteten Profilfeldern |
+| HTML-SDK | `SetVisualizationType(1)`, `GetVisualizationTile()`, `UpdateVisualizationValue(JSON-Text)`, globales JavaScript `handleMessage(message)` |
+| Schalten | `requestAction('ChangeMode', Originalwert)` → Instanz-`RequestAction` → erneute Prüfung der wirksamen Auswahl und Aktion → globales `RequestAction(QuellID, typisierterWert)` |
+| Diagnose | `VVF_GetDiagnostics(InstanzID)` sowie „Diagnose anzeigen“ innerhalb der Kachel; nur lesende Metadaten/Optionen, keine Zugangsdaten |
 
-Der SDK-Bridge wird von der Symcon-Kachel bereitgestellt; es wird keine erfundene SDK-Datei von einem CDN eingebunden. Ein spät verfügbarer Bridge wird erkannt. Es gibt keinen eigenen `postMessage`-Handler und keine selbst implementierte HTTP-Schalt-API. Aus einer normalen lokalen HTML-Datei heraus kann nicht geschaltet werden.
+Die SDK-Bridge stellt die Symcon-Kachel bereit. Es gibt keine zusätzliche SDK-Datei, kein CDN, keinen eigenen `postMessage`-Handler und keine selbst implementierte HTTP-Schalt-API. Eine spät verfügbare Bridge wird erkannt.
 
-Das vollständige Datenobjekt wird initial in die HTML-Datei eingesetzt, später als JSON-Text über den SDK-Kanal übertragen. `JSON_HEX_*` schützt das initiale Skript gegen Profiltexte wie `</script>`. JavaScript setzt Profiltexte nur über `textContent` und erzeugt Optionen über DOM-Methoden.
+**`requestAction()` liefert laut offizieller Dokumentation `void`.** Ein PHP-Fehler lässt sich daher nicht zuverlässig durch `await`/Promise-Catch erkennen. Das Modul speichert den Fehler kurzzeitig im Instanzpuffer und veröffentlicht ihn über `UpdateVisualizationValue()` im Feld `actionError`. Die Kachel beendet dann den Wartezustand und zeigt den tatsächlichen Fehler als Text. Unterstützende Bridge-Versionen mit einem zusätzlichen Promise können ebenfalls einen lokalen Fehler melden. Eine abgesendete Anforderung bestätigt nie den Gerätebetrieb; entscheidend ist das Quellwertupdate. Nach 15 Sekunden ohne passenden Wert erscheint ein Hinweis.
 
-Eine vollständige Anlage wird als Instanzstatus 102, fehlende/ungeeignete Quellen als 104 gemeldet. Eine unsteuerbare Betriebsartvariable ist bei sonst verfügbaren Werten ein gültiger Nur-Lese-Fall. Der interne Snapshot-Puffer unterdrückt unveränderte Timer-Nachrichten; `GetVisualizationTile()` liest die Quellen unabhängig vom Puffer frisch ein.
+Initiale Daten sind mit `JSON_HEX_*` gegen Skriptabschluss im Profiltext geschützt. Beschriftungen und Diagnosen werden ausschließlich über `textContent` eingesetzt. Dynamische Buttons erhalten Originalwerte über JavaScript-Closures, ohne String-/Zahlkonvertierung. Es gibt keine feste Zuordnung „Grundbetrieb = x“ etc.; anhand echter Beschriftungen wird nur ein dekoratives Icon gewählt.
 
-## Nachprüfbare Quellen
+Balken sind nur sichtbar, wenn das Quellprofil oder die wirksame Darstellung echte Min-/Max-Grenzen bereitstellt. Sie zeigen die Position innerhalb dieses Bereichs, keine unabhängig berechnete Filterlebensdauer. Die Wellen und Luftwege sind schematische Darstellung und keine historischen Messwerte.
 
-- [Offizielle Symcon-Dokumentation](https://www.symcon.de/de/service/dokumentation/), Entwicklerbereich → SDK-Tools → HTML-SDK / PHP-SDK, sowie Befehlsreferenz → Variablen und Profile. Die Website war bei dieser Bearbeitung durch den Cloud-Netzwerkproxy gesperrt (HTTP 403); eine vollständige direkte Online-Dokumentationsprüfung ist deshalb **nicht** erfolgt.
-- [Offizielle SymconStubs, fester Prüfstand](https://github.com/symcon/SymconStubs/tree/31f2e0478eb3763236fcf44ea4144271fdeddfd5): `ModuleStubs.php` (Visualisierung, Timer, Referenzen, Nachrichten), `GlobalStubs.php` (Aktionspriorität und Dispatch), `MessageStubs.php` (Nachrichtenkonstanten), `Validator.php` (Manifestanforderungen). Die Verhaltenstests benutzen diese offiziellen Stubs, nicht einen eigenen Ersatz für die PHP-API. Manifestfelder wurden lokal separat geprüft; der PHPUnit-Validator wurde nicht ausgeführt.
-- [Offizielles Modul symcon/Strompreis: PHP](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.php) und [HTML](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.html): bestätigtes Herstellerbeispiel für Visualisierungstyp, Tile-Methode, JSON-Textübertragung und `handleMessage`.
+## Direkt geprüfte offizielle Dokumentation
 
-Die Signatur `requestAction(Ident, Wert)` wird entsprechend dem HTML-SDK-Aufrufmodell des Ausgangsmoduls genutzt. Die Browserprüfung simuliert diese Schnittstelle. Der Browser-Transport, Authentifizierung und Fehlerweitergabe des tatsächlichen Symcon-Frontends sind ohne Symcon-Laufzeit noch nicht verifiziert. Ein aufgelöstes JavaScript-Promise wird deshalb nie als Gerätebestätigung interpretiert; maßgeblich bleibt das Quellwertupdate.
+Die Website ist inzwischen erreichbar. Folgende Seiten wurden für Version 1.2 direkt gelesen:
+
+- [HTML-SDK](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/): Mindestversion 7.1, Visualisierungstyp, initiales HTML, bidirektionale Nachrichten.
+- [JavaScript requestAction](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/requestaction/): `void requestAction(string Ident, mixed Wert)`; ruft PHP-`RequestAction` der Modulinstanz auf.
+- [IPS_GetVariablePresentation](https://www.symcon.de/de/service/dokumentation/befehlsreferenz/variablenverwaltung/ips-getvariablepresentation/): ab 8.1, liefert die aktuelle wirksame Darstellung samt Parametern.
+- [Aufzählung](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/darstellungen/aufzaehlung/): Darstellung `{52D9E126-D7D2-2CBB-5E62-4CF7BA7C5D82}`, `OPTIONS` als JSON-Liste mit `Value`/`Caption`.
+
+Weitere geprüfte Referenzen:
+
+- [Offizielle SymconStubs, fester Prüfstand](https://github.com/symcon/SymconStubs/tree/31f2e0478eb3763236fcf44ea4144271fdeddfd5): Verhaltenstests nutzen die offiziellen APIs und Dispatcher. Manifestfelder sind separat geprüft; der PHPUnit-Validator wurde nicht ausgeführt.
+- [Offizielles Beispiel symcon/Strompreis: PHP](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.php) und [HTML](https://github.com/symcon/Strompreis/blob/75f71d6bebd5543a3d0c1ca7f7878c74c7f2277a/PowerPrice/module.html): JSON-Nachrichten und Tile-Methoden.
+
+Der tatsächliche Frontend-Transport und die Gerätewirkung müssen weiterhin auf der Symcon-Anlage geprüft werden. Die lokalen Browserprüfungen simulieren die dokumentierte Bridge.

@@ -1,11 +1,13 @@
 from pathlib import Path
 import os
+import json
 import subprocess
 import tempfile
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-archive = root / 'docs/downloads/Vitovent300F-Kachel-1.1.zip'
+version = json.loads((root / 'library.json').read_text())['version']
+archive = root / f'docs/downloads/Vitovent300F-Kachel-{version}.zip'
 with tempfile.TemporaryDirectory() as directory:
     with zipfile.ZipFile(archive) as z:
         assert z.testzip() is None
