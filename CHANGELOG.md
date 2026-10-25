@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.9 · Build 10 · 2026-10-25
+
+- Gesamtverbrauchsgraph ab 7 Tagen auf tägliche Archivwerte umgestellt; 24 Stunden bleiben stündlich.
+- Tagesverbrauch (heute) als zusätzlicher Wert in der Gesamtverbrauchskarte: laufendes Tageszähleraggregat seit Server-Mitternacht.
+- Keine Schätzung aus Standard-Zählerstands-Mittelwerten; fehlende Daten mit Hinweis, echte Nullwerte als Null.
+- Archivabfrage mit kurzem Cache, Neubewertung bei Energieänderungen und Tageswechsel. Tagesgrenzen folgen dem Serverkalender.
+
 ## 1.8 · Build 9 · 2026-10-25
 
 - Momentanleistung (PowerID 48602) und Gesamtverbrauch (EnergyID 50335) als zusätzliche Live-Karten mit Symbol und anklickbarem Verlauf ergänzt.

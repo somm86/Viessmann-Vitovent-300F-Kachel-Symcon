@@ -31,6 +31,7 @@ class Vitovent300FTile extends IPSModule
     {
         parent::ApplyChanges();
         $this->SetBuffer('ActionError', '');
+        $this->SetBuffer('DailyEnergyCache', '');
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
         // Only remove subscriptions owned by this module; retain the kernel subscription.
         foreach ($this->GetMessageList() as $sender => $messages) {
@@ -199,7 +200,7 @@ class Vitovent300FTile extends IPSModule
             $presentation = $this->presentation($id);
             $reply['unit'] = in_array($key, ['power', 'energy'], true) ? trim($profile['Suffix'] ?? $presentation['SUFFIX'] ?? '') : '°C';
             $reply['kind'] = $key === 'energy' ? ($aggregationType === 1 ? 'consumption' : 'level') : 'average';
-            $level = $end - $start > 31 * 86400 ? 1 : 0;
+            $level = ($key === 'energy' && $end - $start >= 7 * 86400) || $end - $start > 31 * 86400 ? 1 : 0;
             $reply['aggregation'] = $level === 0 ? 'Stündliche Mittelwerte' : 'Tägliche Mittelwerte';
             if ($reply['kind'] === 'consumption') {
                 $reply['aggregation'] = $level === 0 ? 'Verbrauch je Stunde (Zählerdifferenzen)' : 'Verbrauch je Tag (Zählerdifferenzen)';
@@ -228,6 +229,46 @@ class Vitovent300FTile extends IPSModule
         }
         // Independent response: do not overwrite live data or operating-mode errors.
         $this->UpdateVisualizationValue($this->encode(['history' => $reply]));
+    }
+
+    private function dailyConsumption(array $energy): array
+    {
+        $start = strtotime('today');
+        $now = time();
+        $key = $this->ReadPropertyInteger('EnergyID') . ':' . $start . ':' . ($energy['updated'] ?? 0) . ':' . ($energy['value'] ?? '') . ':' . ($energy['unit'] ?? '');
+        $cache = json_decode($this->GetBuffer('DailyEnergyCache'), true);
+        if (is_array($cache) && ($cache['key'] ?? '') === $key && $now - ($cache['time'] ?? 0) < 60) {
+            return $cache['data'];
+        }
+        $result = ['value' => null, 'unit' => $energy['unit'] ?? '', 'reason' => '',
+            'start' => $start, 'updated' => $now, 'timezone' => date_default_timezone_get()];
+        try {
+            $id = $this->ReadPropertyInteger('EnergyID');
+            if (($energy['value'] ?? null) === null) {
+                throw new RuntimeException('Gesamtverbrauch nicht verfügbar.');
+            }
+            $archive = 0;
+            foreach (IPS_GetInstanceListByModuleID('{43192F0B-135B-4CE7-A0A7-1475603F3060}') as $candidate) {
+                if (AC_GetLoggingStatus($candidate, $id)) { $archive = $candidate; break; }
+            }
+            if (!$archive) {
+                throw new RuntimeException('Tagesverbrauch benötigt eine aktive Archivprotokollierung.');
+            }
+            if (AC_GetAggregationType($archive, $id) !== 1) {
+                throw new RuntimeException('Tagesverbrauch benötigt Zähleraggregation im Archive Control; Zählerstands-Mittelwerte sind kein Tagesverbrauch.');
+            }
+            foreach (AC_GetAggregatedValues($archive, $id, 1, $start, $now, 2) as $row) {
+                if ((int) $row['TimeStamp'] === $start && (is_int($row['Avg']) || is_float($row['Avg'])) && is_finite((float) $row['Avg'])) {
+                    $result['value'] = $row['Avg'];
+                    break;
+                }
+            }
+            if ($result['value'] === null) {
+                throw new RuntimeException('Heute noch keine archivierten Verbrauchswerte verfügbar.');
+            }
+        } catch (Throwable $e) { $result['reason'] = $e->getMessage(); }
+        $this->SetBuffer('DailyEnergyCache', $this->encode(['key' => $key, 'time' => $now, 'data' => $result]));
+        return $result;
     }
 
     private function sourceMessages(): array
@@ -355,6 +396,7 @@ class Vitovent300FTile extends IPSModule
                 $data['missing'][] = $source[2];
             }
         }
+        $data['dailyEnergy'] = $this->dailyConsumption($data['values']['energy']);
         try {
             $data['mode'] = $this->modeConfiguration();
         } catch (Throwable $e) {

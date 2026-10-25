@@ -14,7 +14,7 @@ In Module Control die Repository-URL hinzufügen, veröffentlichten Branch ausw�
 
 ## Lokal mit dem ZIP
 
-1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.8.zip.sha256`).
+1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.9.zip.sha256`).
 2. Auf dem Symcon-Server das Datenverzeichnis ermitteln. Es lässt sich im Skripteditor mit `echo IPS_GetKernelDir();` anzeigen. Typisch unter Linux `/var/lib/symcon/`; bei Containern zählt das Verzeichnis **im Container**. Unter Windows den tatsächlichen Datenpfad verwenden.
 3. Den entpackten Ordner nach `<Datenverzeichnis>/modules/Vitovent300F_Kachel/` kopieren. Beispiel: `/var/lib/symcon/modules/Vitovent300F_Kachel/library.json`. Keine zusätzliche gleichnamige Ordnerebene einfügen. Lesezugriff für den Symcon-Dienst sicherstellen.
 4. Den IP-Symcon-Dienst über die vorhandene Dienst-/Containerverwaltung neu starten. Vorher eigene Konfiguration sichern. Keine zweite Kopie derselben Bibliothek installieren.
@@ -66,3 +66,9 @@ In Module Control aktualisieren, die Instanz übernehmen und die Kachel neu öff
 Für beide Graphen muss die jeweilige Variable archiviert werden. Die Leistung benötigt Standardaggregation. Beim Gesamtverbrauch akzeptiert die Kachel Standard- oder Zähleraggregation und beschriftet die Graphen entsprechend: Standard zeigt Gesamtzählerstände, Zähler zeigt den Verbrauch pro Archivintervall als Balken. Es werden keine Zählerstände addiert oder Leistungswerte als Energie dargestellt. Die Archivkonfiguration wird nicht automatisch geändert.
 
 Zur Abnahme jede neue Karte öffnen, Zeitraum und Navigation prüfen, Einheiten mit dem Quellprofil vergleichen und die Graphen mit den Archivdaten der jeweiligen Aggregationsart abgleichen. Diese reale Datenprüfung kann nur auf der Zielanlage erfolgen.
+
+## Tageswerte und Tagesverbrauch ab 1.9
+
+Der Gesamtverbrauchsgraph nutzt in der 24-Stunden-Ansicht Stundenwerte und ab 7 Tagen Tageswerte. Temperatur und Momentanleistung behalten ihre bisherige Auflösung. Bei Zählerarchivierung sind dies echte Verbrauchsmengen pro Tag; bei Standardarchivierung bleiben es ausdrücklich gemittelte Gesamtzählerstände.
+
+Die Gesamtverbrauchskarte zeigt zusätzlich „Tagesverbrauch (heute)“. Dieser Wert stammt direkt aus dem aktuellen täglichen Zähleraggregat der Energiequelle. Voraussetzung ist aktive Zählerarchivierung. Er beginnt bei Mitternacht der Symcon-Serverzeitzone und ist für den laufenden Tag unvollständig. Es wird kein Tagesverbrauch aus Gesamtzählerstands-Mittelwerten geschätzt. Bei fehlender Voraussetzung oder fehlenden heutigen Daten bleibt der Wert „—“; ein tatsächlicher Verbrauch von Null wird als Null angezeigt. Die Archivierung wird nicht automatisch umgestellt.

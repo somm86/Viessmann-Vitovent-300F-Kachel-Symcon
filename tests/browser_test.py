@@ -127,6 +127,7 @@ with sync_playwright() as p:
     demo['values']['filter'].update(value=281, formatted='281 Tage', hasUnit=True, range={'min': 0, 'max': 365})
     demo['values']['power'].update(value=37, formatted='37 W', hasUnit=True, unit='W')
     demo['values']['energy'].update(value=952.6, formatted='952,60 kWh', hasUnit=True, unit='kWh')
+    demo['dailyEnergy'] = {'value': .281, 'unit': 'kWh', 'reason': '', 'timezone': 'Europe/Vienna'}
     demo['values']['mode'].update(value=-701, formatted='Grundbetrieb')
     demo['mode']['choices'] = [
         {'value': -701, 'label': 'Grundbetrieb'}, {'value': -702, 'label': 'Reduziert'},
@@ -194,7 +195,7 @@ with sync_playwright() as p:
     def reply_history(empty=False, error='', request_override=None, kind=None):
         request = request_override or json.loads(page.evaluate('calls.at(-1).value'))
         kind = kind or ('consumption' if request['key'] == 'energy' else 'average')
-        step = 86400 if request['end'] - request['start'] > 31 * 86400 else 3600
+        step = 86400 if request['end'] - request['start'] > 31 * 86400 or (request['key'] == 'energy' and request['end'] - request['start'] >= 7 * 86400) else 3600
         data = {'requestId': request['requestId'], 'key': request['key'], 'variableID': demo['values'][request['key']]['id'],
                 'start': request['start'], 'end': request['end'], 'step': step, 'error': error, 'kind': kind,
                 'unit': demo['values'][request['key']].get('unit') or '°C',
@@ -274,6 +275,7 @@ with sync_playwright() as p:
     # New electric readings are live and use the same range/navigation graph.
     page.set_viewport_size({'width': 1100, 'height': 850})
     check(page.locator('#power').inner_text() == '37 W', 'power displays original formatted source value')
+    check(page.locator('#dailyEnergy').inner_text() == '0,281 kWh', 'today consumption is displayed independently of total meter')
     check(page.locator('#energy').inner_text() == '952,60 kWh', 'energy displays original formatted source value')
     updated_electric = copy.deepcopy(demo)
     updated_electric['values']['power'].update(value=42, formatted='42 W')
@@ -304,10 +306,22 @@ with sync_playwright() as p:
     check('0,037 kWh' in page.locator('#historyChart .history-bar title').first.text_content(), 'small energy values retain useful precision')
     check(page.locator('#historyChart').evaluate('el => [...el.querySelectorAll("text")].every(t => {const b=t.getBBox(); return b.x >= -1 && b.x+b.width <= el.viewBox.baseVal.width+1;})'), 'energy axis labels fit without clipping units')
     page.screenshot(path=str(ROOT / 'tests/output/electricity-history.png'), animations='disabled')
+    page.locator('#historyRange').select_option('604800')
+    reply_history()
+    check('je Tag' in page.locator('#historyDetail').inner_text(), 'energy week chart is labeled as consumption per day')
+    check('Tagesverbrauch' not in page.locator('#historyTitle').inner_text(), 'total-energy chart remains distinct from current-day indicator')
     reply_history(kind='level')
     check('Zählerstand' in page.locator('#historyUnit').inner_text(), 'standard energy logging is labeled as meter level')
     check(page.locator('#historyChart circle').count() == 2 and page.locator('#historyChart .history-bar').count() == 0, 'standard total-energy archive is a level curve')
     page.locator('#historyClose').click()
+    daily_missing = copy.deepcopy(updated_electric)
+    daily_missing['dailyEnergy'] = {'value': None, 'unit': 'kWh', 'reason': 'Zähleraggregation erforderlich'}
+    page.evaluate('handleMessage', json.dumps(daily_missing))
+    check(page.locator('#dailyEnergy').inner_text() == '—', 'missing daily data is not reported as zero')
+    check('Zähleraggregation' in page.locator('#dailyEnergyNote').inner_text(), 'daily consumption prerequisite is visible')
+    daily_missing['dailyEnergy'] = {'value': 0, 'unit': 'kWh', 'reason': ''}
+    page.evaluate('handleMessage', json.dumps(daily_missing))
+    check(page.locator('#dailyEnergy').inner_text() == '0 kWh', 'actual zero daily usage remains visible')
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()
 print(f'PASS: {checks} browser assertions (simulated HTML-SDK bridge)')
