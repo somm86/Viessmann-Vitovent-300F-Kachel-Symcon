@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.3 · Build 4 · 2026-10-25
+
+- Symbole über Containergrößen und begrenzte fließende Größen an Kachel und Teilbereiche angepasst.
+- Luftsymbole bleiben auch bei schmalen Kacheln sichtbar; Thermometer werden bei Platzmangel ausgeblendet.
+- Zentrales Gerät, Messwert-, Betriebsart- und Informationssymbole skalieren mit.
+- Browserprüfungen vergleichen Symbolgrößen zwischen großer und kleiner Kachel.
+
 ## 1.2 · Build 3 · 2026-10-25
 
 - Dashboard an die Bildvorlage angepasst: blaues Gerätegehäuse, leuchtende Luftströme, Außenluft/Abluft links und Zuluft/Fortluft rechts, große Messwerte und dynamische Betriebsarten-Kacheln.

@@ -138,13 +138,18 @@ with sync_playwright() as p:
     check(page.locator('#filterTrack').is_hidden(), 'missing source range hides filter bar')
     page.evaluate('handleMessage', json.dumps(demo))
     check(page.locator('#flowBar').evaluate('el => el.style.width') == '42.5%', 'bar uses actual supplied source range')
+    symbol_sizes = {}
     for width in [1536, 1180, 800, 700, 360, 320]:
         page.set_viewport_size({'width': width, 'height': 1024})
         check(page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'no overflow at {width}px')
         for selector in ['#outside', '#supply', '#extract', '#exhaust', '#modeButtons']:
             check(page.locator(selector).is_visible(), f'{selector} visible at {width}px')
         if width in [1536, 360]:
+            symbol_sizes[width] = {selector: page.locator(selector).first.bounding_box()['width'] for selector in ['.outside > .icon', '.metric-icon', '.mode-button .icon', '.device']}
             page.screenshot(path=str(ROOT / f'tests/output/dashboard-{width}.png'), full_page=True, animations='disabled')
+    for selector in symbol_sizes[1536]:
+        check(symbol_sizes[1536][selector] > symbol_sizes[360][selector], f'{selector} scales with tile width')
+    check(page.locator('.outside > .icon').first.is_visible(), 'air symbol remains visible in small tiles')
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()
 print(f'PASS: {checks} browser assertions (simulated HTML-SDK bridge)')
