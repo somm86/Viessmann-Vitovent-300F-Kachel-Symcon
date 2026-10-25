@@ -1,4 +1,4 @@
-# Prüfbericht · Version 1.6 · 25. Oktober 2026
+# Prüfbericht · Version 1.7 · 25. Oktober 2026
 
 ## Ergebnis und Reichweite
 

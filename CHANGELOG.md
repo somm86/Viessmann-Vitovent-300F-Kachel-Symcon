@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.7 · Build 8 · 2026-10-25
+
+- Unteres Zusatzfeld „Aktuelle Betriebsart“ samt Informationssymbol entfernt. Die aktuelle Betriebsart bleibt im Kopfbereich und an der aktiven Betriebsart-Kachel sichtbar.
+- Filterwartungsbereich inklusive Kalendersymbol entfernt; Filterrestlaufzeit und Quellbereichsbalken bleiben erhalten.
+- Nicht mehr benötigte SVG-Symbole, CSS-Regeln und JavaScript-Aktualisierung entfernt.
+
 ## 1.6 · Build 7 · 2026-10-25
 
 - Vier Temperaturkarten anklickbar und per Tastatur bedienbar; öffnen ein eigenes Diagramm im Dialog.
