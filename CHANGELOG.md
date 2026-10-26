@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.15 · Build 16 · 2026-10-26
+
+- Zentrale Raum-Solltemperatur im Gerätesymbol direkt anklickbar und per Enter/Leertaste bedienbar.
+- Auswahlfenster mit bestehendem 15–30-°C-Dropdown und Übernehmen öffnen; separate untere Bedienkarte entfernt.
+- Symbolgrafik beim Öffnen, Auswählen und Schalten unverändert lassen; native Aktion und Quellbestätigung beibehalten.
+
 ## 1.14 · Build 15 · 2026-10-26
 
 - Filterrestzeit wieder in Tagen anzeigen, anhand der tatsächlichen Quelleneinheit.

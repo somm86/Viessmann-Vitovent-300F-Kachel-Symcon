@@ -54,7 +54,7 @@ Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch E
 
 Die Filterrestzeit wird wieder in **Tagen** angezeigt. Liegt die Quelle bereits in Tagen vor, bleibt der Tageswert erhalten; Sekunden, Minuten und Stunden werden anhand der tatsächlichen Einheit in Tage umgerechnet. Unbekannte Einheiten werden nicht geraten. Die Gerätewerte bleiben unverändert.
 
-Die Raum-Solltemperatur wird **mittig im zentralen Gerätesymbol** als Livewert angezeigt. Dropdown (15–30 °C) und Übernehmen-Button bleiben zur Bedienung in der unteren Karte. Erst ein Quellwertupdate bestätigt eine Anforderung; vorher bleibt der bisherige Wert im Symbol stehen.
+Die Raum-Solltemperatur wird **mittig im zentralen Gerätesymbol** als Livewert angezeigt. **Die Solltemperatur im Symbol anklicken**, um das Auswahlfenster mit Dropdown (15–30 °C) und Übernehmen zu öffnen. Die separate Bedienkarte unten entfällt. Per Tastatur funktioniert das über Tab und Enter/Leertaste; Schließen über ✕ oder Escape. Die Gerätegrafik selbst bleibt beim Öffnen und Schalten unverändert. Erst ein Quellwertupdate bestätigt eine Anforderung; vorher bleibt der bisherige Wert im Symbol stehen.
 
 Die Uhr in der Filterkarte zeigt weiterhin die aktuelle lokale Browser-Uhrzeit (HH:mm:ss), unabhängig von Messwertupdates.
 
@@ -113,7 +113,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.14.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.14.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.15.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.15.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

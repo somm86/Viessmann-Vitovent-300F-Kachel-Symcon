@@ -89,4 +89,10 @@ Die Kachel erhält ab 1.12 ausschließlich ein Dropdown im 1-°C-Raster und eine
 
 Die Oberfläche zeigt die tatsächliche Filterrestzeit in Tagen. Explizit erkannte Zeiteinheiten (Sekunden, Minuten, Stunden, Tage) werden in Tage umgerechnet, unbekannte Einheiten nicht geraten. Die Anzeige nutzt höchstens zwei Nachkommastellen; Rohwert und profilbasierter Bereichsbalken bleiben unverändert. `filterClock` zeigt weiterhin die lokale Browser-Uhrzeit und wird über den bestehenden 1-Sekunden-Timer aktualisiert.
 
-`setpointValue` liegt als SVG-Text im mittigen `setpoint-readout` des zentralen Gerätesymbols. `renderSetpoint` setzt ausschließlich `textContent` und ergänzt den zugänglichen SVG-Beschreibungstext. Die alte separate Wertanzeige in der unteren Bedienkarte ist entfernt; Dropdown und Übernehmen bleiben erhalten. Quellbestätigung, Fehlerbehandlung und native Aktionsweiterleitung sind unverändert.
+`setpointValue` liegt als SVG-Text im mittigen `setpoint-readout` des zentralen Gerätesymbols. `renderSetpoint` setzt ausschließlich `textContent` und ergänzt den zugänglichen SVG-Beschreibungstext. Die alte separate Wertanzeige in der unteren Bedienkarte ist entfernt. Ab 1.15 öffnet das mittige SVG-Element einen eigenen Dialog mit Dropdown und Übernehmen; die Bedienkarte wird aus dem Dashboard in diesen Dialog verschoben. Quellbestätigung, Fehlerbehandlung und native Aktionsweiterleitung sind unverändert.
+
+## Auswahl direkt im Symbol ab 1.15
+
+`setpoint-readout` ist ein fokussierbares SVG-Element mit `role=button`, `tabindex=0`, `aria-haspopup=dialog` und eigener Zeigerereignis-Freigabe trotz dekorativer Elterncontainer. Klick, Enter oder Leertaste öffnen `setpointDialog` als nativen modalen Dialog. Der SVG-Container verwendet die Gruppenrolle, damit der interaktive Nachfahre für Hilfstechnologien erreichbar bleibt. Der aktuelle Sollwert ist Teil des zugänglichen Namens.
+
+Der vorhandene 15–30-°C-Selector und Übernehmen-Button werden wiederverwendet; Grenzenprüfung, Quellbestätigung und Fehlerkanal sind unverändert. Der Dialog liegt außerhalb des skalierten Dashboards. Seine Öffnung verändert weder Pfade noch Rechtecke oder Farben der Gerätegrafik. Schließen per Button oder Escape; die native Dialog-Fokusverwaltung führt zum Auslöser zurück.
