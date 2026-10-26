@@ -13,10 +13,20 @@ Für eine vorhandene Installation: Repository in **Module Control aktualisieren*
 Für die Erstinstallation:
 
 1. In der IP-Symcon-Verwaltungskonsole **Module Control** öffnen, über **Hinzufügen** die URL `https://github.com/somm86/Viessmann-Vitovent-300F-Kachel-Symcon` eintragen und den veröffentlichten Branch auswählen.
-2. Instanz **Vitovent 300-F Kachel** anlegen. Die neun Quellvariablen prüfen, dann **Übernehmen**.
+2. Instanz **Vitovent 300-F Kachel** anlegen. Die zehn Quellvariablen prüfen, dann **Übernehmen**.
 3. Die Instanz in der Kachelvisualisierung hinzufügen bzw. verlinken. Für die Übersicht eine ausreichend große Kachel wählen.
 
 Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enthaltenen Bibliotheksordner `Vitovent300F_Kachel` vollständig nach `<Symcon-Datenverzeichnis>/modules/` auf dem **Symcon-Server** kopieren, anschließend den Symcon-Dienst neu starten. Direkt darunter muss `library.json` liegen. Nicht gleichzeitig per Module Control und lokal installieren: beide Pakete haben dieselben GUIDs. Betriebssystemdetails und Prüfschritte: [Installationsanleitung](docs/INSTALLATION.md).
+
+## Neue IDs und steuerbare Solltemperatur ab 1.11
+
+Die sieben Lüftungsquellen wurden nach dem Screenshot vom 26.10.2026 aktualisiert. Bestehende Instanzen mit den bisherigen **Standard-IDs** werden beim Modul-Update über die offizielle `Migrate()`-Funktion einmalig auf die neuen IDs umgestellt. Davon abweichende eigene Zuordnungen bleiben erhalten. Danach werden die alten Zuordnungen nicht bei jedem Start erneut überschrieben. Die Strom-IDs 48602/50335 bleiben unverändert, da sie im neuen Screenshot nicht enthalten sind. In der Instanz bitte die tatsächlichen Zuordnungen kontrollieren.
+
+**LüftungRaumtempSoll (41384)** erhält eine eigene Temperaturkarte mit numerischer Eingabe und **Übernehmen**. Die Steuerung verwendet ausschließlich die vorhandene Quellvariablenaktion über `RequestAction()`; es wird kein Quellwert direkt gesetzt. Min/Max/Schrittweite oder konkrete Auswahlwerte stammen aus dem wirksamen Profil bzw. der modernen Darstellung. Vor jedem Schalten prüft der Server diese erneut. Ohne deklarierte Grenzen werden keine erfunden: Die freie numerische Eingabe wird an die Geräteaktion weitergeleitet, die dann ihre eigene Validierung ausführt. Ohne gültige Aktion bleibt die Steuerung gesperrt.
+
+Die angezeigte Solltemperatur ändert sich erst mit dem Quellwert. Fehler erscheinen in der Karte; nach 15 Sekunden ohne passenden Quellwert gibt es einen Hinweis. Im Instanzformular liefert **Solltemperatur-Diagnose anzeigen** die tatsächlich erkannten Grenzen, Auswahlwerte und Aktions-ID. Die im Beispielbild gezeigten 16–28 °C / 0,5 °C sind reine Testprofilwerte und keine eingebauten Geräteannahmen.
+
+Heizungs-Betriebsart, Heizkreispumpe, Heizungs-Raumsolltemperatur und Warmwasserwerte aus dem Screenshot werden nicht übernommen.
 
 ## Temperaturverlauf ab Version 1.6
 
@@ -48,21 +58,22 @@ Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die
 
 | Anzeige | ID | Eigenschaft |
 |---|---:|---|
-| Außenluft | 46477 | `OutsideID` |
-| Zuluft | 29484 | `SupplyID` |
-| Abluft | 15325 | `ExtractID` |
-| Fortluft | 23757 | `ExhaustID` |
-| Volumenstrom | 36483 | `FlowID` |
-| Filterrestzeit | 51925 | `FilterID` |
-| Betriebsart | 54849 | `ModeID` |
+| Außenluft | 31044 | `OutsideID` |
+| Zuluft | 42234 | `SupplyID` |
+| Abluft | 58476 | `ExtractID` |
+| Fortluft | 22909 | `ExhaustID` |
+| Volumenstrom | 34190 | `FlowID` |
+| Filterrestzeit | 38673 | `FilterID` |
+| Betriebsart | 28301 | `ModeID` |
 | Momentanleistung | 48602 | `PowerID` |
 | Gesamtverbrauch | 50335 | `EnergyID` |
+| Lüftung Raumtemperatur Soll | 41384 | `SetpointID` |
 
 Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Volumenstrom und Filterrestzeit werden mit `GetValueFormatted()` gemäß dem tatsächlichen Quellprofil angezeigt; ohne Einheit im Profil wird keine erfunden. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
 
 ## Betriebsart: ausschließlich vorhandene Werte
 
-Die Kachel liest die wirksame Auswahl von Variable 54849:
+Die Kachel liest die wirksame Auswahl von Variable 28301:
 
 - Klassische Profile: benutzerdefiniertes Profil vor Standardprofil, ausschließlich vorhandene Assoziationen.
 - Moderne Darstellung **Aufzählung**: ausschließlich die über `IPS_GetVariablePresentation()` gelieferten `OPTIONS` mit ihren tatsächlichen `Value`-/`Caption`-Feldern (API verfügbar ab Symcon 8.1). Eine wirksame moderne Darstellung hat Vorrang vor veralteten Profilfeldern.
@@ -94,7 +105,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.10.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.10.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.11.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.11.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

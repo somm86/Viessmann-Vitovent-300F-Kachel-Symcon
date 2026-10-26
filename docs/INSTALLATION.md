@@ -3,7 +3,7 @@
 ## Voraussetzungen
 
 - IP-Symcon 7.1 oder neuer mit Kachelvisualisierung und HTML-SDK. Die Mindestversion ist aus dem Ausgangsmodul übernommen; reale Versionsabnahme siehe Prüfbericht.
-- Bestehende Geräteintegration, die die neun Quellvariablen liefert. Das Kachelmodul benötigt keine Verbindung zu einer übergeordneten Instanz.
+- Bestehende Geräteintegration, die die zehn Quellvariablen liefert. Das Kachelmodul benötigt keine Verbindung zu einer übergeordneten Instanz.
 - Numerische Temperaturwerte in °C. Numerischer Volumenstrom und Filterrestzeit mit geeigneten Profilen/Einheiten. Betriebsartvariable mit echten Profil-Assoziationen oder einer modernen Darstellung „Aufzählung“ mit hinterlegten Optionen (Auslesen ab Symcon 8.1) und funktionsfähiger Variablenaktion, falls Steuerung gewünscht ist.
 
 ## Über Module Control
@@ -14,7 +14,7 @@ In Module Control die Repository-URL hinzufügen, veröffentlichten Branch ausw�
 
 ## Lokal mit dem ZIP
 
-1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.10.zip.sha256`).
+1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.11.zip.sha256`).
 2. Auf dem Symcon-Server das Datenverzeichnis ermitteln. Es lässt sich im Skripteditor mit `echo IPS_GetKernelDir();` anzeigen. Typisch unter Linux `/var/lib/symcon/`; bei Containern zählt das Verzeichnis **im Container**. Unter Windows den tatsächlichen Datenpfad verwenden.
 3. Den entpackten Ordner nach `<Datenverzeichnis>/modules/Vitovent300F_Kachel/` kopieren. Beispiel: `/var/lib/symcon/modules/Vitovent300F_Kachel/library.json`. Keine zusätzliche gleichnamige Ordnerebene einfügen. Lesezugriff für den Symcon-Dienst sicherstellen.
 4. Den IP-Symcon-Dienst über die vorhandene Dienst-/Containerverwaltung neu starten. Vorher eigene Konfiguration sichern. Keine zweite Kopie derselben Bibliothek installieren.
@@ -34,10 +34,10 @@ Bei lokaler Installation nur die bestehende Bibliothekskopie aktualisieren, nich
 
 ## Verifikation der echten Anlage
 
-1. `docs/inspect-symcon.php` in den Symcon-Skripteditor kopieren und ausführen. Es liest nur die neun vorgegebenen IDs. Bei angepassten IDs diese auch im Diagnoseskript anpassen. Prüfen: Typ, aktueller Wert, formatierter Wert, Profil mit Assoziationen, Standard-/benutzerdefinierte Aktion, wirksame `presentation` und `actionExists`. Ab Version 1.2 zusätzlich die Kachel-Diagnose bzw. den Diagnoseknopf in der Instanz nutzen.
+1. `docs/inspect-symcon.php` in den Symcon-Skripteditor kopieren und ausführen. Es liest nur die zehn vorgegebenen IDs. Bei angepassten IDs diese auch im Diagnoseskript anpassen. Prüfen: Typ, aktueller Wert, formatierter Wert, Profil mit Assoziationen, Standard-/benutzerdefinierte Aktion, wirksame `presentation` und `actionExists`. Ab Version 1.2 zusätzlich die Kachel-Diagnose bzw. den Diagnoseknopf in der Instanz nutzen.
 2. Alle vier Temperaturen mit den Quellvariablen vergleichen; insbesondere Abluft und Fortluft nicht verwechseln. Filtereinheit und Volumenstromeinheit aus dem jeweiligen Profil prüfen. Eine fehlende Quellvariable muss „—“ und „Daten unvollständig“ ergeben.
 3. Einen von der Geräteintegration ohnehin gelieferten Messwertwechsel beobachten: Die Kachel muss ohne Neuladen reagieren. Profiländerungen werden spätestens beim 30-Sekunden-Abgleich berücksichtigt. Der Zeitstempel unten ist das jüngste Quellupdate und kein Nachweis, dass das Gerät aktuell erreichbar ist.
-4. Bei Variable 54849 prüfen, ob jede angezeigte Auswahl exakt einer tatsächlichen Profil-Assoziation oder einem tatsächlichen `OPTIONS.Value` der wirksamen Aufzählung entspricht. Es werden keine beispielhaften Modi als echte Auswahl installiert. Ohne tatsächliche Auswahlwerte oder ohne gültige Aktion bleibt das Feld gesperrt. Eine `VariableCustomAction` von `1` bleibt gesperrt.
+4. Bei Variable 28301 prüfen, ob jede angezeigte Auswahl exakt einer tatsächlichen Profil-Assoziation oder einem tatsächlichen `OPTIONS.Value` der wirksamen Aufzählung entspricht. Es werden keine beispielhaften Modi als echte Auswahl installiert. Ohne tatsächliche Auswahlwerte oder ohne gültige Aktion bleibt das Feld gesperrt. Eine `VariableCustomAction` von `1` bleibt gesperrt.
 5. Wenn das Schalten der Lüftung vor Ort passend ist: den aktuellen Wert merken, einen bereits in der Quellvariablen funktionierenden Profilwert wählen und Quellwert sowie tatsächlichen Gerätezustand kontrollieren. Anschließend den vorherigen Modus wiederherstellen. Der Test verändert den realen Anlagenbetrieb; er wurde in der Cloud nicht ausgeführt.
 6. Symcon neu starten und die Kachel erneut öffnen. Zuordnungen, Livewerte und Auswahl müssen erhalten bleiben.
 
@@ -74,3 +74,11 @@ Der Gesamtverbrauchsgraph nutzt in der 24-Stunden-Ansicht Stundenwerte und ab 7 
 Die Gesamtverbrauchskarte zeigt zusätzlich „Monatsverbrauch (laufend)“. Dieser Wert stammt direkt aus dem aktuellen Monatszähleraggregat (Aggregationsstufe 3) der Energiequelle. Voraussetzung ist aktive Zählerarchivierung. Der Zeitraum beginnt am ersten Tag dieses Kalendermonats um 00:00 Uhr in der Symcon-Serverzeitzone und ist für den laufenden Monat unvollständig. Es wird kein Verbrauch aus Gesamtzählerstands-Mittelwerten geschätzt. Bei fehlenden Voraussetzungen oder Monatsdaten bleibt der Wert „—“; ein echter Nullverbrauch wird als 0,00 angezeigt. Die Archivierung wird nicht automatisch umgestellt.
 
 Alle angezeigten Verbrauchswerte haben genau zwei Nachkommastellen. Dies betrifft Gesamtverbrauch, laufenden Monatsverbrauch, Achsen und Tooltips im Verbrauchsdiagramm. Roh- und Archivwerte bleiben unverändert; es wird nur die Anzeige gerundet.
+
+## ID-Wechsel und Lüftungs-Solltemperatur ab 1.11
+
+Neue Zuordnungen: Außenluft 31044, Zuluft 42234, Abluft 58476, Fortluft 22909, Volumenstrom 34190, Filterrestzeit 38673, Betriebsart Lüftung 28301, LüftungRaumtempSoll 41384. Leistung 48602 und Energie 50335 wurden nicht geändert. Das ist ausschließlich Lüftung: 55945 (Heizungs-Raumsolltemperatur) und 41758 (Heizungs-Betriebsart) werden nicht verwendet.
+
+Beim Modul-Update verarbeitet `Migrate()` die gespeicherte Instanzkonfiguration. Nur alte Standard-IDs werden ersetzt, benutzerdefinierte IDs bleiben erhalten. `SourcesUpdated20261026` markiert die einmalige Umstellung. Neue Instanzen erhalten unmittelbar die neuen Standards. Nach dem Update die Instanz öffnen, alle zehn IDs prüfen, übernehmen und die Kachel neu öffnen.
+
+Für die Solltemperatur muss 41384 numerisch sein und eine gültige Variablenaktion besitzen. Quellprofile oder Darstellungen bestimmen Grenzen, Schrittweite und gegebenenfalls Auswahlwerte. Prüfen, ob „Solltemperatur-Diagnose anzeigen“ die tatsächlichen Werte liefert. Dann einen vor Ort sinnvollen Wert eingeben, übernehmen und sowohl Quellvariable als auch tatsächliche Gerätewirkung kontrollieren; danach bei Bedarf den vorherigen Sollwert wiederherstellen. Der Cloud-Test hat keine echte Geräteaktion ausgeführt. Ohne vorhandene Grenzen gibt es bewusst keine ausgedachten Standardgrenzen; die native Geräteaktion muss ihre eigenen zulässigen Werte durchsetzen.

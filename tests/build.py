@@ -1,6 +1,7 @@
 """Reproducible module ZIP with one library root; no tests, Git data or secrets."""
 from pathlib import Path
 import hashlib
+from datetime import datetime, timezone
 import json
 import zipfile
 
@@ -8,13 +9,15 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = ['library.json', 'README.md', 'CHANGELOG.md', 'docs/INSTALLATION.md',
          'docs/VALIDATION.md', 'docs/API.md', 'docs/inspect-symcon.php', 'docs/dashboard.png',
          'Vitovent300FTile/module.json', 'Vitovent300FTile/module.php', 'Vitovent300FTile/tile.html']
-version = json.loads((ROOT / 'library.json').read_text())['version']
+library = json.loads((ROOT / 'library.json').read_text())
+version = library['version']
+stamp = datetime.fromtimestamp(library['date'], timezone.utc).timetuple()[:6]
 dest = ROOT / 'docs' / 'downloads'
 dest.mkdir(exist_ok=True)
 archive = dest / f'Vitovent300F-Kachel-{version}.zip'
 with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for name in sorted(FILES):
-        info = zipfile.ZipInfo('Vitovent300F_Kachel/' + name, date_time=(2026, 10, 25, 0, 0, 0))
+        info = zipfile.ZipInfo('Vitovent300F_Kachel/' + name, date_time=stamp)
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
         z.writestr(info, (ROOT / name).read_bytes())
@@ -35,7 +38,7 @@ source_files = FILES + ['.gitignore', '.github/workflows/check.yml', 'tests/buil
 source_archive = dest / f'Vitovent300F-GitHub-{version}.zip'
 with zipfile.ZipFile(source_archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for name in sorted(source_files):
-        info = zipfile.ZipInfo('Viessmann-Vitovent-300F-Kachel-Symcon/' + name, date_time=(2026, 10, 25, 0, 0, 0))
+        info = zipfile.ZipInfo('Viessmann-Vitovent-300F-Kachel-Symcon/' + name, date_time=stamp)
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
         z.writestr(info, (ROOT / name).read_bytes())

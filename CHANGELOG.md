@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.11 · Build 12 · 2026-10-26
+
+- Lüftungs-IDs aktualisiert: 31044 / 42234 / 58476 / 22909 / 34190 / 38673 / 28301. Stromquellen unverändert.
+- Einmalige Migration alter Standard-IDs über offizielle Persistenz-Migration, eigene Zuordnungen erhalten.
+- LüftungRaumtempSoll 41384 als steuerbare Temperaturkarte aufgenommen. Typ, deklarierte Grenzen, Schrittweite und echte Auswahl vor Weiterleitung an native Variablenaktion prüfen.
+- Eigene Solltemperatur-Diagnose, Fehlerkanal, Quellbestätigung und Timeout; keine Heizungswerte oder erfundenen Solltemperaturbereiche.
+
 ## 1.10 · Build 11 · 2026-10-25
 
 - Tagesauflösung des Verbrauchsgraphen ab 7 Tagen und ausdrücklich auch bei 365 Tagen durch zusätzliche Prüfungen abgesichert.

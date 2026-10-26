@@ -29,14 +29,14 @@ function privateValue($module, $name) {
     return $r->getValue($module);
 }
 check(IPS_GetInstance($id)['InstanceVisualizationType'] === 1, 'HTML visualization type');
-check(IPS_GetProperty($id, 'ModeID') === 54849, 'original defaults');
+check(IPS_GetProperty($id, 'ModeID') === 28301, 'original defaults');
 check(IPS_GetProperty($id, 'PowerID') === 48602 && IPS_GetProperty($id, 'EnergyID') === 50335, 'electricity IDs from user screenshot');
-check(count(snapshot($module)['missing']) === 9, 'empty installation is honest');
+check(count(snapshot($module)['missing']) === 10, 'empty installation is honest');
 check(IPS_GetInstance($id)['InstanceStatus'] === 104, 'incomplete status');
 $form = json_decode(IPS_GetConfigurationForm($id), true, 512, JSON_THROW_ON_ERROR);
-check(count(array_filter($form['elements'], function ($e) { return $e['type'] === 'SelectVariable'; })) === 9, 'nine selectors');
+check(count(array_filter($form['elements'], function ($e) { return $e['type'] === 'SelectVariable'; })) === 10, 'ten selectors');
 $ids = [];
-foreach (['OutsideID','SupplyID','ExtractID','ExhaustID','FlowID','FilterID','ModeID','PowerID','EnergyID'] as $property) {
+foreach (['OutsideID','SupplyID','ExtractID','ExhaustID','FlowID','FilterID','ModeID','PowerID','EnergyID','SetpointID'] as $property) {
     $v = IPS_CreateVariable($property === 'ModeID' ? 1 : 2);
     $ids[$property] = $v;
     IPS_SetProperty($id, $property, $v);
@@ -53,7 +53,7 @@ IPS_SetVariableCustomProfile($ids['FilterID'], 'Fixture.Filter');
 IPS_ApplyChanges($id);
 check(count(snapshot($module)['missing']) === 0, 'all sources read');
 check(IPS_GetInstance($id)['InstanceStatus'] === 102, 'active status');
-check(count(IPS_GetReferenceList($id)) === 9, 'source references registered');
+check(count(IPS_GetReferenceList($id)) === 10, 'source references registered');
 $messages = privateValue($module, 'messageRegistrations');
 check(in_array(IPS_KERNELSTARTED, $messages[0], true), 'restart subscribed');
 check(in_array(VM_UPDATE, $messages[$mode], true), 'updates subscribed');
@@ -116,7 +116,7 @@ IPS_ApplyChanges($id);
 check(!in_array($old, IPS_GetReferenceList($id), true), 'old reference removed');
 check(!isset(privateValue($module, 'messageRegistrations')[$old]), 'old events removed');
 IPS_ApplyChanges($id);
-check(count(IPS_GetReferenceList($id)) === 9, 'apply repeatable');
+check(count(IPS_GetReferenceList($id)) === 10, 'apply repeatable');
 IPS_DeleteVariable($new);
 $module->MessageSink(time(), $new, VM_DELETE, []);
 check(in_array('Außenluft', snapshot($module)['missing'], true), 'deleted variable unavailable');
@@ -322,6 +322,69 @@ AC_StubsAddAggregatedValues($archive, $ids['EnergyID'], 3, [['TimeStamp' => $tod
 SetValue($ids['EnergyID'], 953.0);
 $daily = snapshot($module)['monthlyEnergy'];
 check((float) $daily['value'] === 0.0 && $daily['reason'] === '', 'real zero consumption is shown and source changes invalidate cache');
+// Migrate only the seven old default IDs; preserve custom settings and all other state.
+$oldConfig = ['OutsideID' => 46477, 'SupplyID' => 29484, 'ExtractID' => 15325, 'ExhaustID' => 23757,
+    'FlowID' => 36483, 'FilterID' => 51925, 'ModeID' => 54849, 'PowerID' => 48602, 'EnergyID' => 50335];
+$newIDs = ['OutsideID' => 31044, 'SupplyID' => 42234, 'ExtractID' => 58476, 'ExhaustID' => 22909,
+    'FlowID' => 34190, 'FilterID' => 38673, 'ModeID' => 28301];
+$migration = json_decode($module->Migrate(json_encode(['configuration' => $oldConfig, 'attributes' => (object) ['KeepMe' => 'fixture']])), true);
+foreach ($newIDs as $property => $newID) check($migration['configuration'][$property] === $newID, 'old default migrates to screenshot ID');
+check($migration['attributes']['KeepMe'] === 'fixture', 'migration preserves unrelated attributes');
+check($migration['configuration']['PowerID'] === 48602 && $migration['configuration']['EnergyID'] === 50335, 'migration preserves electricity sources');
+check($module->Migrate(json_encode($migration)) === '', 'migration runs only once');
+$custom = $oldConfig;
+$custom['OutsideID'] = 49999;
+$preserved = json_decode($module->Migrate(json_encode(['configuration' => $custom, 'attributes' => (object) []])), true);
+check($preserved['configuration']['OutsideID'] === 49999, 'custom source is never replaced');
+$migratedID = IPS_CreateInstance('{4305595E-0E5F-4124-AD59-8E11257A1E97}');
+$migrated = IPS\InstanceManager::getInstanceInterface($migratedID);
+$migrated->ApplyPersistence($migration);
+IPS_ApplyChanges($migratedID);
+check(IPS_GetProperty($migratedID, 'ModeID') === 28301 && IPS_GetProperty($migratedID, 'SetpointID') === 41384, 'persisted migration and new setpoint property initialize together');
+// Numeric setpoint dispatch always uses its own source action and current constraints.
+$setpoint = $ids['SetpointID'];
+check(!json_decode($module->GetSetpointDiagnostics(), true)['writable'], 'setpoint without action read only');
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 24); }, 'missing setpoint action');
+IPS_CreateVariableProfile('Fixture.Setpoint', 2);
+IPS_SetVariableProfileText('Fixture.Setpoint', '', ' °C');
+IPS_SetVariableProfileValues('Fixture.Setpoint', 16, 28, .5);
+IPS_SetVariableCustomProfile($setpoint, 'Fixture.Setpoint');
+IPS_SetVariableCustomAction($setpoint, $action);
+SetValue($setpoint, 24.0);
+IPS_ApplyChanges($id);
+$config = snapshot($module)['setpoint'];
+check($config['writable'] && $config['min'] === 16 && $config['max'] === 28 && $config['step'] === .5, 'real profile limits and step exposed');
+$module->RequestAction('SetRoomTemperature', 23.5);
+check($GLOBALS['captured']['VARIABLE'] === $setpoint && $GLOBALS['captured']['VALUE'] === 23.5, 'setpoint dispatched to correct source as float');
+check(snapshot($module)['values']['setpoint']['value'] === 23.5, 'setpoint source confirmation displayed');
+foreach (['24', true, null, [], INF, NAN, 15.5, 28.5, 23.3] as $invalid) {
+    rejects(function () use ($module, $invalid) { $module->RequestAction('SetRoomTemperature', $invalid); }, 'invalid or out-of-profile setpoint');
+}
+check(snapshot($module)['setpointError'] !== '', 'setpoint errors published independently');
+IPS_SetVariableProfileValues('Fixture.Setpoint', 18, 26, 1);
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 23.5); }, 'stale setpoint step revalidated');
+$module->RequestAction('SetRoomTemperature', 24);
+check($GLOBALS['captured']['VALUE'] === 24.0 && snapshot($module)['setpointError'] === '', 'successful setpoint clears error and retains float type');
+IPS\VariableManager::setVariableAction($setpoint, $target);
+IPS_SetVariableCustomAction($setpoint, 1);
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 24); }, 'disabled custom setpoint action does not fall back');
+IPS_SetVariableCustomAction($setpoint, $action);
+IPS_SetVariableCustomPresentation($setpoint, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+    'OPTIONS' => json_encode([['Value' => 22.5, 'Caption' => 'Fixture 22.5'], ['Value' => 24, 'Caption' => 'Fixture 24']])]);
+$config = json_decode($module->GetSetpointDiagnostics(), true);
+check(array_column($config['choices'], 'value') === [22.5, 24], 'real enumeration setpoint values exposed');
+$module->RequestAction('SetRoomTemperature', 22.5);
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 23); }, 'unknown setpoint association');
+IPS_SetVariableCustomProfile($setpoint, 'Fixture.Setpoint');
+// Absence of configured limits must not invent a min/max or step.
+IPS_SetVariableProfileValues('Fixture.Setpoint', 0, 0, 0);
+$config = json_decode($module->GetSetpointDiagnostics(), true);
+check($config['min'] === null && $config['max'] === null && $config['step'] === null, 'missing source limits remain absent');
+$module->RequestAction('SetRoomTemperature', 22.2);
+check($GLOBALS['captured']['VALUE'] === 22.2, 'manual numeric value delegates to native action when no limits declared');
+IPS_SetVariableProfileValues('Fixture.Setpoint', 16, 28, .5);
+SetValue($setpoint, 24.0);
+IPS_ApplyChanges($id);
 if (!is_dir(__DIR__ . '/output')) { mkdir(__DIR__ . '/output', 0777, true); }
 file_put_contents(__DIR__ . '/output/tile.html', $module->GetVisualizationTile());
 file_put_contents(__DIR__ . '/output/snapshot.json', json_encode(snapshot($module), JSON_THROW_ON_ERROR));

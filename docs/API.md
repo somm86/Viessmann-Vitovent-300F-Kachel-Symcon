@@ -55,7 +55,7 @@ Direkt gelesene offizielle Referenzen:
 
 ## Stromwerte ab 1.8
 
-Zwei zusätzliche Integer-Eigenschaften `PowerID=48602` und `EnergyID=50335` sind in denselben Lifecycle, Referenzen, Meldungen und Live-Snapshot eingebunden. Damit gibt es neun Quellen und sechs erlaubte Verlaufsschlüssel. Livewerte sind read-only; ausschließlich die bestehende Betriebsart nutzt die Aktionsweiterleitung an eine Quellvariable.
+Zwei zusätzliche Integer-Eigenschaften `PowerID=48602` und `EnergyID=50335` sind in denselben Lifecycle, Referenzen, Meldungen und Live-Snapshot eingebunden. Seit 1.11 gibt es einschließlich Solltemperatur zehn Quellen und sechs erlaubte Verlaufsschlüssel. Livewerte sind read-only; Betriebsart und Lüftungs-Solltemperatur nutzen ihre jeweils eigene Quellvariablenaktion.
 
 Der History-Server liefert zusätzlich `unit` aus Profil-Suffix bzw. Darstellungs-Suffix und `kind`:
 
@@ -69,6 +69,14 @@ Die Oberfläche zeichnet `consumption` als Balken, `average` und `level` als Kur
 
 Der Snapshot enthält `monthlyEnergy` mit Wert, Quelleneinheit, Monatsbeginn, Aktualisierungszeit, Serverzeitzone und gegebenenfalls einem Hinweis. Der Wert wird über `AC_GetAggregatedValues(Archiv, EnergyID, 3, strtotime('first day of this month 00:00:00'), time(), 2)` aus dem laufenden Monatsaggregat gelesen, ausschließlich bei aktiver Zählerarchivierung. Nur ein Datensatz mit exakt dem aktuellen Monatsbeginn wird akzeptiert. Gesamtzählerstands-Mittelwerte werden nie als Verbrauch ausgegeben.
 
-Ein bis zu 60 Sekunden gültiger Cache vermeidet Archivzugriffe bei jedem anderen Sensorupdate. Ein anderer Monatsbeginn, eine andere Energiequelle, neue Quellwerte/-zeitstempel oder eine neue Einheit ändern den Cache-Schlüssel. Übernehmen der Instanzkonfiguration löscht den Cache ebenfalls. Fehlende Werte führen zu `value=null`; ein echter Zahlenwert 0 bleibt erhalten und wird als 0,00 angezeigt. Es bleibt bei neun Quellvariablen.
+Ein bis zu 60 Sekunden gültiger Cache vermeidet Archivzugriffe bei jedem anderen Sensorupdate. Ein anderer Monatsbeginn, eine andere Energiequelle, neue Quellwerte/-zeitstempel oder eine neue Einheit ändern den Cache-Schlüssel. Übernehmen der Instanzkonfiguration löscht den Cache ebenfalls. Fehlende Werte führen zu `value=null`; ein echter Zahlenwert 0 bleibt erhalten und wird als 0,00 angezeigt. Mit der Solltemperatur ab 1.11 gibt es zehn Quellvariablen.
 
 Der Verbrauchsgraph nutzt weiterhin Stufe 1 für Zeiträume ab 7 Tagen, auch bei 365 Tagen. Die Monatsaggregation dient ausschließlich dem Zusatzwert für den laufenden Monat. Verbrauchswerte werden nur für die Anzeige mit zwei Nachkommastellen gerundet; Originalpräfix und -suffix bleiben erhalten, und Archivdaten werden nicht verändert.
+
+## ID-Migration und Solltemperatur ab 1.11
+
+Die offizielle [Migrate-Dokumentation](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/module/migrate/) wurde direkt geprüft: Der Kernel übergibt die gespeicherte Persistenz vor dem nachfolgenden `ApplyChanges`, beim Modul-Update oder Start. Das Modul ändert nur die sieben bekannten alten Standard-IDs und ergänzt das persistente Attribut `SourcesUpdated20261026`. Andere Properties/Attribute und vom Standard abweichende IDs bleiben erhalten. Bei bereits gesetztem Marker wird keine weitere Migration durchgeführt.
+
+`SetpointID=41384` ist eine zusätzliche Quelle. `setpoint` im Snapshot beschreibt aktuelle Grenzen, Schrittweite, konkrete Auswahlwerte, Quelltyp und effektive Aktion; `setpointError` ist ein eigenständiger Fehlerkanal. `requestAction('SetRoomTemperature', Zahl)` liest diese Konfiguration erneut, prüft Typ, echte Grenzen, deklarierte Schrittweite bzw. konkrete Auswahl und leitet typgetreu an `RequestAction(SetpointID, Wert)` weiter. CustomAction=1 sperrt auch hier die Steuerung. Es gibt weder erfundene Solltemperaturbereiche noch direkte `SetValue`-Schreibzugriffe.
+
+Die Kachel erhält eine nummerische Eingabe bzw. Auswahl und Übernehmen-Button. Eine laufende Eingabe bleibt bei anderen Sensorupdates bestehen. Bis zum Quellwertupdate bleibt der bisherige Sollwert angezeigt. Ein eigener 15-Sekunden-Timeout und der separate Serverfehlerkanal lösen den Wartezustand. `VVF_GetSetpointDiagnostics(InstanzID)` liefert nur lesende Konfigurationsdaten. Reale Hardwaregrenzen und Gerätewirkung sind erst auf dem Zielserver verifizierbar.

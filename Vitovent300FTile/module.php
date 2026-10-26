@@ -6,15 +6,16 @@ class Vitovent300FTile extends IPSModule
     private const LEGACY = '{4153A8D4-5C33-C65F-C1F3-7B61AAF99B1C}';
 
     private const SOURCES = [
-        'outside' => ['OutsideID', 46477, 'Außenluft'],
-        'supply' => ['SupplyID', 29484, 'Zuluft'],
-        'extract' => ['ExtractID', 15325, 'Abluft'],
-        'exhaust' => ['ExhaustID', 23757, 'Fortluft'],
-        'flow' => ['FlowID', 36483, 'Volumenstrom'],
-        'filter' => ['FilterID', 51925, 'Filterrestzeit'],
-        'mode' => ['ModeID', 54849, 'Betriebsart'],
+        'outside' => ['OutsideID', 31044, 'Außenluft'],
+        'supply' => ['SupplyID', 42234, 'Zuluft'],
+        'extract' => ['ExtractID', 58476, 'Abluft'],
+        'exhaust' => ['ExhaustID', 22909, 'Fortluft'],
+        'flow' => ['FlowID', 34190, 'Volumenstrom'],
+        'filter' => ['FilterID', 38673, 'Filterrestzeit'],
+        'mode' => ['ModeID', 28301, 'Betriebsart'],
         'power' => ['PowerID', 48602, 'Momentanleistung'],
-        'energy' => ['EnergyID', 50335, 'Gesamtverbrauch']
+        'energy' => ['EnergyID', 50335, 'Gesamtverbrauch'],
+        'setpoint' => ['SetpointID', 41384, 'Lüftung Raumtemperatur Soll']
     ];
 
     public function Create()
@@ -23,14 +24,35 @@ class Vitovent300FTile extends IPSModule
         foreach (self::SOURCES as $source) {
             $this->RegisterPropertyInteger($source[0], $source[1]);
         }
+        $this->RegisterAttributeBoolean('SourcesUpdated20261026', true);
         $this->RegisterTimer('Refresh', 0, 'VVF_Refresh($_IPS["TARGET"]);');
         $this->SetVisualizationType(1);
+    }
+
+    public function Migrate($JSONData)
+    {
+        parent::Migrate($JSONData);
+        $state = json_decode($JSONData);
+        if (!is_object($state) || !isset($state->configuration) || !is_object($state->configuration)) return '';
+        if (!isset($state->attributes) || !is_object($state->attributes)) $state->attributes = new stdClass();
+        if (($state->attributes->SourcesUpdated20261026 ?? false) === true) return '';
+        $oldDefaults = ['OutsideID' => 46477, 'SupplyID' => 29484, 'ExtractID' => 15325,
+            'ExhaustID' => 23757, 'FlowID' => 36483, 'FilterID' => 51925, 'ModeID' => 54849];
+        foreach (self::SOURCES as $source) {
+            $property = $source[0];
+            if (isset($oldDefaults[$property]) && ($state->configuration->$property ?? null) === $oldDefaults[$property]) {
+                $state->configuration->$property = $source[1];
+            }
+        }
+        $state->attributes->SourcesUpdated20261026 = true;
+        return json_encode($state, JSON_THROW_ON_ERROR);
     }
 
     public function ApplyChanges()
     {
         parent::ApplyChanges();
         $this->SetBuffer('ActionError', '');
+        $this->SetBuffer('SetpointError', '');
         $this->SetBuffer('MonthlyEnergyCache', '');
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
         // Only remove subscriptions owned by this module; retain the kernel subscription.
@@ -70,13 +92,13 @@ class Vitovent300FTile extends IPSModule
 
     public function GetConfigurationForm()
     {
-        $elements = [['type' => 'Label', 'caption' => 'Vorhandene Lüftungsvariablen auswählen. Keine Verbindung zum Heizgerät nötig. Die Betriebsart verwendet nur vorhandene Profil-Assoziationen oder Aufzählungsoptionen und die vorhandene Variablenaktion.']];
+        $elements = [['type' => 'Label', 'caption' => 'Vorhandene Lüftungsvariablen auswählen. Die Betriebsart verwendet nur vorhandene Profil-Assoziationen oder Aufzählungsoptionen. Für die Solltemperatur gelten die deklarierten Grenzen und Schritte der Quelle. Geschaltet wird jeweils über die vorhandene Variablenaktion.']];
         foreach (self::SOURCES as $source) {
             $elements[] = ['type' => 'SelectVariable', 'name' => $source[0], 'caption' => $source[2]];
         }
         $elements[] = ['type' => 'Label', 'caption' => 'Temperaturen müssen in °C vorliegen. Einheiten für Volumenstrom und Filterrestzeit stammen aus den Quellprofilen. Ohne Profil wird keine Einheit angenommen.'];
-        return $this->encode(['elements' => $elements, 'actions' => [['type' => 'Button', 'caption' => 'Betriebsart-Diagnose anzeigen', 'onClick' => 'echo VVF_GetDiagnostics($id);']], 'status' => [
-            ['code' => 102, 'icon' => 'active', 'caption' => 'Alle neun Quellvariablen verfügbar'],
+        return $this->encode(['elements' => $elements, 'actions' => [['type' => 'Button', 'caption' => 'Betriebsart-Diagnose anzeigen', 'onClick' => 'echo VVF_GetDiagnostics($id);'], ['type' => 'Button', 'caption' => 'Solltemperatur-Diagnose anzeigen', 'onClick' => 'echo VVF_GetSetpointDiagnostics($id);']], 'status' => [
+            ['code' => 102, 'icon' => 'active', 'caption' => 'Alle zehn Quellvariablen verfügbar'],
             ['code' => 104, 'icon' => 'inactive', 'caption' => 'Quellvariable fehlt oder hat einen ungeeigneten Datentyp']
         ]]);
     }
@@ -103,6 +125,10 @@ class Vitovent300FTile extends IPSModule
 
     public function RequestAction($ident, $value)
     {
+        if ($ident === 'SetRoomTemperature') {
+            $this->setRoomTemperature($value);
+            return;
+        }
         if ($ident === 'LoadHistory') {
             $this->loadHistory($value);
             return;
@@ -147,6 +173,89 @@ class Vitovent300FTile extends IPSModule
     public function GetDiagnostics(): string
     {
         return $this->encode($this->modeConfiguration());
+    }
+
+    public function GetSetpointDiagnostics(): string
+    {
+        return $this->encode($this->setpointConfiguration());
+    }
+
+    private function setpointConfiguration(): array
+    {
+        $id = $this->ReadPropertyInteger('SetpointID');
+        $result = ['variableID' => $id, 'writable' => false, 'reason' => 'Solltemperaturvariable fehlt.',
+            'type' => null, 'min' => null, 'max' => null, 'step' => null, 'choices' => [], 'actionID' => 0];
+        if ($id <= 0 || !IPS_VariableExists($id)) return $result;
+        $variable = IPS_GetVariable($id);
+        $result['type'] = $variable['VariableType'];
+        if (!in_array($result['type'], [1, 2], true)) {
+            $result['reason'] = 'Solltemperatur benötigt eine numerische Variable.';
+            return $result;
+        }
+        $presentation = $this->presentation($id);
+        $profile = $this->profile($variable, $id);
+        $min = $profile['MinValue'] ?? $presentation['MIN'] ?? null;
+        $max = $profile['MaxValue'] ?? $presentation['MAX'] ?? null;
+        $step = $profile['StepSize'] ?? $presentation['STEP_SIZE'] ?? null;
+        if (is_numeric($min) && is_numeric($max) && is_finite((float) $min) && is_finite((float) $max) && $max > $min) {
+            $result['min'] = (float) $min;
+            $result['max'] = (float) $max;
+        }
+        if (is_numeric($step) && is_finite((float) $step) && $step > 0) $result['step'] = (float) $step;
+        if (($presentation['PRESENTATION'] ?? '') === self::ENUMERATION) {
+            $options = json_decode($presentation['OPTIONS'] ?? '[]', true);
+            if (is_array($options)) foreach ($options as $option) {
+                if (is_array($option) && isset($option['Value'], $option['Caption']) &&
+                    (is_int($option['Value']) || is_float($option['Value'])) && is_finite((float) $option['Value'])) {
+                    $result['choices'][] = ['value' => $option['Value'], 'label' => (string) $option['Caption']];
+                }
+            }
+            if (!$result['choices']) { $result['reason'] = 'Keine Solltemperatur-Auswahlwerte vorhanden.'; return $result; }
+        } elseif ($profile !== null && !empty($profile['Associations'])) {
+            foreach ($profile['Associations'] as $association) {
+                if ((is_int($association['Value']) || is_float($association['Value'])) && is_finite((float) $association['Value'])) {
+                    $result['choices'][] = ['value' => $association['Value'], 'label' => (string) $association['Name']];
+                }
+            }
+        }
+        $action = ($variable['VariableCustomAction'] ?? 0) > 0 ? $variable['VariableCustomAction'] : ($variable['VariableAction'] ?? 0);
+        $result['actionID'] = $action;
+        if ($action < 10000 || (!IPS_InstanceExists($action) && !IPS_ScriptExists($action))) {
+            $result['reason'] = 'Solltemperatur hat keine gültige Variablenaktion oder ist deaktiviert.';
+            return $result;
+        }
+        $result['writable'] = true;
+        $result['reason'] = '';
+        return $result;
+    }
+
+    private function setRoomTemperature($value)
+    {
+        $this->SetBuffer('SetpointError', '');
+        try {
+            if (IPS_GetKernelRunlevel() !== KR_READY) throw new RuntimeException('IP-Symcon ist noch nicht bereit.');
+            $config = $this->setpointConfiguration();
+            if (!$config['writable']) throw new RuntimeException($config['reason']);
+            if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value)) throw new InvalidArgumentException('Solltemperatur muss eine endliche Zahl sein.');
+            if ($config['type'] === 1 && (float) (int) $value !== (float) $value) throw new InvalidArgumentException('Diese Solltemperaturvariable benötigt ganze Zahlen.');
+            if ($config['choices']) {
+                $allowed = false;
+                foreach ($config['choices'] as $choice) if ((float) $choice['value'] === (float) $value) $allowed = true;
+                if (!$allowed) throw new InvalidArgumentException('Solltemperatur ist nicht in der aktuellen Auswahl enthalten.');
+            }
+            if ($config['min'] !== null && ($value < $config['min'] || $value > $config['max'])) throw new InvalidArgumentException('Solltemperatur liegt außerhalb der konfigurierten Grenzen.');
+            if (!$config['choices'] && $config['step'] !== null) {
+                $steps = ($value - ($config['min'] ?? 0)) / $config['step'];
+                if (abs($steps - round($steps)) > 0.000001) throw new InvalidArgumentException('Solltemperatur entspricht nicht der konfigurierten Schrittweite.');
+            }
+            RequestAction($config['variableID'], $config['type'] === 1 ? (int) $value : (float) $value);
+            $this->Refresh();
+        } catch (Throwable $e) {
+            $this->SetBuffer('SetpointError', $e->getMessage());
+            $this->SendDebug('Solltemperaturaktion fehlgeschlagen', $e->getMessage(), 0);
+            $this->Refresh();
+            throw $e;
+        }
     }
 
     private function loadHistory($value)
@@ -400,6 +509,9 @@ class Vitovent300FTile extends IPSModule
                 $data['missing'][] = $source[2];
             }
         }
+        try { $data['setpoint'] = $this->setpointConfiguration(); }
+        catch (Throwable $e) { $data['setpoint'] = ['writable' => false, 'reason' => 'Solltemperaturkonfiguration nicht verfügbar.', 'choices' => []]; }
+        $data['setpointError'] = $this->GetBuffer('SetpointError');
         $data['monthlyEnergy'] = $this->monthlyConsumption($data['values']['energy']);
         try {
             $data['mode'] = $this->modeConfiguration();

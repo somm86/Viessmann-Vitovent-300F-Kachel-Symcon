@@ -1,7 +1,7 @@
 <?php
 // Run in IP-Symcon's script editor. READ ONLY: no RequestAction and no SetValue.
-$ids = ['Außenluft' => 46477, 'Zuluft' => 29484, 'Abluft' => 15325, 'Fortluft' => 23757,
-    'Volumenstrom' => 36483, 'Filterrestzeit' => 51925, 'Betriebsart' => 54849, 'Momentanleistung' => 48602, 'Gesamtverbrauch' => 50335];
+$ids = ['Außenluft' => 31044, 'Zuluft' => 42234, 'Abluft' => 58476, 'Fortluft' => 22909,
+    'Volumenstrom' => 34190, 'Filterrestzeit' => 38673, 'Betriebsart' => 28301, 'Momentanleistung' => 48602, 'Gesamtverbrauch' => 50335, 'Lüftung Raumtemperatur Soll' => 41384];
 $report = [];
 foreach ($ids as $name => $id) {
     if (!IPS_VariableExists($id)) {
