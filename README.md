@@ -22,7 +22,7 @@ Für eine Installation ohne GitHub: das Release-ZIP entpacken und den darin enth
 
 Die sieben Lüftungsquellen wurden nach dem Screenshot vom 26.10.2026 aktualisiert. Bestehende Instanzen mit den bisherigen **Standard-IDs** werden beim Modul-Update über die offizielle `Migrate()`-Funktion einmalig auf die neuen IDs umgestellt. Davon abweichende eigene Zuordnungen bleiben erhalten. Danach werden die alten Zuordnungen nicht bei jedem Start erneut überschrieben. Die Strom-IDs 48602/50335 bleiben unverändert, da sie im neuen Screenshot nicht enthalten sind. In der Instanz bitte die tatsächlichen Zuordnungen kontrollieren.
 
-**LüftungRaumtempSoll (41384)** erhält eine eigene Temperaturkarte mit **Dropdown in 1-°C-Schritten** und **Übernehmen**. Die Steuerung verwendet ausschließlich die vorhandene Quellvariablenaktion über `RequestAction()`; es wird kein Quellwert direkt gesetzt. Min/Max/Schrittweite oder konkrete Auswahlwerte stammen aus dem wirksamen Profil bzw. der modernen Darstellung. Vor jedem Schalten prüft der Server diese erneut. Innerhalb deklarierter Grenzen wird eine Auswahl im 1-°C-Raster erzeugt; von der Quelle ausgeschlossene Werte werden nicht angeboten. Ohne deklarierte Grenzen gibt es nur **aktueller Sollwert −1 °C / aktueller Sollwert / aktueller Sollwert +1 °C**, keinen erfundenen absoluten Temperaturbereich. Nach Bestätigung der neuen Temperatur wandert diese relative Auswahl mit. Ein vorhandener Nachkommaanteil bleibt bei 1-°C-Änderungen erhalten. Die Geräteaktion führt zusätzlich ihre native Validierung aus. Ohne gültige Aktion bleibt die Steuerung gesperrt.
+**LüftungRaumtempSoll (41384)** erhält eine eigene Temperaturkarte mit **Dropdown in 1-°C-Schritten** und **Übernehmen**. Die Steuerung verwendet ausschließlich die vorhandene Quellvariablenaktion über `RequestAction()`; es wird kein Quellwert direkt gesetzt. Min/Max/Schrittweite oder konkrete Auswahlwerte stammen aus dem wirksamen Profil bzw. der modernen Darstellung. Vor jedem Schalten prüft der Server diese erneut. Die gewünschte Auswahl ist **15 bis 30 °C in ganzen 1-°C-Schritten**. Deklarierte Quellgrenzen, native Schrittweiten oder echte Assoziationen können die Auswahl weiter einschränken. Ohne Quellgrenzen gilt der vom Nutzer festgelegte Bereich 15–30 °C. Die Geräteaktion führt zusätzlich ihre native Validierung aus. Ohne gültige Aktion bleibt die Steuerung gesperrt.
 
 Die angezeigte Solltemperatur ändert sich erst mit dem Quellwert. Fehler erscheinen in der Karte; nach 15 Sekunden ohne passenden Quellwert gibt es einen Hinweis. Im Instanzformular liefert **Solltemperatur-Diagnose anzeigen** die tatsächlich erkannten Grenzen, Auswahlwerte und Aktions-ID. Die im Beispielbild gezeigten 16–28 °C / 0,5 °C sind reine Testprofilwerte und keine eingebauten Geräteannahmen.
 
@@ -50,6 +50,12 @@ Auf die jeweilige Karte klicken, um den Verlauf mit der vorhandenen Zeitbereichs
 
 Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch Einheiten im Diagramm stammen aus dem Profil bzw. der Darstellung. Wenn keine Einheit hinterlegt ist, wird „Quelleneinheit“ gemeldet. Gesamtverbrauch, Monatsverbrauch sowie Werte und Tooltips im Verbrauchsdiagramm haben genau **zwei Nachkommastellen**. Die Angaben im Screenshot sind Beispieldaten; auf der Anlage werden die tatsächlichen Werte geladen.
 
+## Filterrestzeit und Uhrzeit ab 1.13
+
+Die Filterrestzeit wird als **Stunden und Minuten** angezeigt, z.B. 281 Tage → 6.744 h 00 min oder 1,5 Stunden → 1 h 30 min. Maßgeblich ist die im Quellprofil hinterlegte Einheit (Sekunden, Minuten, Stunden oder Tage). Die Umrechnung erzeugt keine feinere Messauflösung: Liefert das Gerät nur ganze Tage, bleiben die Minuten entsprechend 00. Bei unbekannter Einheit wird der ursprüngliche formatierte Wert mit einem Hinweis angezeigt. Der Gerätewert und die Filterprotokollierung bleiben unverändert; es gibt keinen künstlichen Sekundencountdown.
+
+Darunter zeigt eine Uhr die **aktuelle lokale Browser-Uhrzeit (HH:mm:ss)**, unabhängig von Messwertupdates. Dies ist kein angenommener Ablaufzeitpunkt der Filterwartung.
+
 ## Kachelgröße
 
 Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die verfügbare Höhe. Vor einer nötigen Verkleinerung wird die interne Layoutbreite entsprechend erweitert; dadurch entstehen keine breiten seitlichen Leerflächen. Inhalte werden neu umgebrochen, Symbole bleiben unverzerrt. Ein `ResizeObserver` erfasst Änderungen der Kachel und des Inhalts. Auch nach Datenupdates und beim Öffnen der Diagnose wird das Layout neu eingepasst.
@@ -69,7 +75,7 @@ Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die
 | Gesamtverbrauch | 50335 | `EnergyID` |
 | Lüftung Raumtemperatur Soll | 41384 | `SetpointID` |
 
-Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Volumenstrom und Filterrestzeit werden mit `GetValueFormatted()` gemäß dem tatsächlichen Quellprofil angezeigt; ohne Einheit im Profil wird keine erfunden. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
+Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Der Volumenstrom verwendet `GetValueFormatted()`. Die Filterrestzeit wird anhand der tatsächlichen Quelleneinheit in Stunden und Minuten umgerechnet; unbekannte Einheiten werden nicht geraten. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
 
 ## Betriebsart: ausschließlich vorhandene Werte
 
@@ -105,7 +111,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.12.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.12.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.13.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.13.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

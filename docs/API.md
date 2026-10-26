@@ -81,8 +81,12 @@ Die offizielle [Migrate-Dokumentation](https://www.symcon.de/de/service/dokument
 
 Die Kachel erhält ab 1.12 ausschließlich ein Dropdown im 1-°C-Raster und einen Übernehmen-Button. Eine noch nicht abgesendete Auswahl bleibt bei anderen Sensorupdates bestehen. Bis zum Quellwertupdate bleibt der bisherige Sollwert angezeigt. Ein eigener 15-Sekunden-Timeout und der separate Serverfehlerkanal lösen den Wartezustand. `VVF_GetSetpointDiagnostics(InstanzID)` liefert nur lesende Konfigurationsdaten. Reale Hardwaregrenzen und Gerätewirkung sind erst auf dem Zielserver verifizierbar.
 
-## Solltemperatur-Dropdown ab 1.12
+## Solltemperatur-Dropdown ab 1.13
 
-`setpoint.choices` enthält die serverseitig neu berechnete Auswahl im 1-°C-Abstand. Der Raster-Nachkommaanteil entspricht dem aktuellen Quellwert, damit auch z.B. 24,5 → 25,5 tatsächlich eine Änderung um 1 °C bleibt. Vorhandene Grenzen und native Schrittweite bleiben bindend; konkrete Assoziationen werden nur gefiltert, nie durch neue Zwischenwerte ergänzt. `step=1` beschreibt das UI-Raster, `sourceStep` die ursprüngliche Quellschrittweite. Eine Quellschrittweite von z.B. 2 °C kann die Auswahl weiter einschränken.
+`setpoint.choices` wird aus dem vom Nutzer vorgegebenen Bereich **15 bis 30 °C in 1-°C-Schritten** erzeugt. Vorhandene Quellgrenzen, native Schrittweite und konkrete Assoziationen werden zusätzlich geprüft. Ausgeschlossene Werte erscheinen nicht in der Auswahl. Ohne native Grenzen gilt der explizit angeforderte Bereich 15–30. `step=1` beschreibt das UI-Raster und `sourceStep` die ursprüngliche Quellschrittweite. Vor jedem Request berechnet der Server die Liste neu und akzeptiert nur aktuell angebotene Werte. Die Quellprofile selbst bleiben unverändert.
 
-Ohne absolute Quellgrenzen werden lediglich aktueller Wert −1, aktueller Wert und aktueller Wert +1 angeboten. Es wird kein fester Temperaturbereich erfunden. Das gilt auch serverseitig: `SetRoomTemperature` liest die Auswahl vor jedem Request neu und akzeptiert nur einen aktuell angebotenen Wert. Unbegrenzte freie numerische Eingaben und Halbgradänderungen sind damit entfernt. Die Quellprofile selbst werden nicht verändert.
+## Filterzeit und Uhr
+
+Die Oberfläche rechnet den tatsächlichen Filterwert anhand von `values.filter.unit` um. Erkannt werden s/sek/sec und ausgeschriebene Sekunden, min und ausgeschriebene Minuten, h/hr und ausgeschriebene Stunden sowie d/Tag/Tage/day/days. Ganze verbleibende Minuten werden angezeigt; Tageswerte werden mit 24 Stunden pro Tag umgerechnet. Fehlende oder unbekannte Einheiten führen nicht zu einer angenommenen Umrechnung. Der Quellwert selbst und der profilbasierte Balken werden nicht verändert.
+
+`filterClock` erhält jede Sekunde die lokale Browser-Uhrzeit mit Stunden/Minuten/Sekunden. Der schon vorhandene 1-Sekunden-Frontend-Timer übernimmt diese Aktualisierung; dafür wird weder das Gerät abgefragt noch eine Ablaufprognose berechnet.

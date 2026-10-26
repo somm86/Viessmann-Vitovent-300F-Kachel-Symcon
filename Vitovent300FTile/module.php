@@ -222,43 +222,22 @@ class Vitovent300FTile extends IPSModule
         $result['sourceStep'] = $result['step'];
         $result['step'] = 1;
         $result['relative'] = false;
-        $current = GetValue($id);
-        $gridOffset = (is_int($current) || is_float($current)) && is_finite((float) $current) ? $current - floor($current) : 0;
+        $result['displayMin'] = 15;
+        $result['displayMax'] = 30;
         $nativeChoices = $result['choices'];
         $result['choices'] = [];
-        $accept = function ($candidate) use ($result) {
-            if ($result['min'] !== null && ($candidate < $result['min'] || $candidate > $result['max'])) return false;
+        for ($value = 15; $value <= 30; $value++) {
+            if ($result['min'] !== null && ($value < $result['min'] || $value > $result['max'])) continue;
             if ($result['sourceStep'] !== null) {
-                $steps = ($candidate - ($result['min'] ?? 0)) / $result['sourceStep'];
-                if (abs($steps - round($steps)) > 0.000001) return false;
+                $steps = ($value - ($result['min'] ?? 0)) / $result['sourceStep'];
+                if (abs($steps - round($steps)) > 0.000001) continue;
             }
-            return true;
-        };
-        if ($nativeChoices) {
-            foreach ($nativeChoices as $choice) {
-                $value = $choice['value'];
-                if (abs(($value - $gridOffset) - round($value - $gridOffset)) < 0.000001 && $accept($value)) {
-                    $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
-                }
+            if ($nativeChoices) {
+                $allowed = false;
+                foreach ($nativeChoices as $choice) if ((float) $choice['value'] === (float) $value) $allowed = true;
+                if (!$allowed) continue;
             }
-        } elseif ($result['min'] !== null) {
-            if ($result['max'] - $result['min'] <= 1000) {
-                for ($value = ceil($result['min'] - $gridOffset) + $gridOffset; $value <= $result['max']; $value++) {
-                    if ($accept($value)) $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
-                }
-            }
-        } else {
-            // No invented absolute limits: permit only current -1/current/current +1.
-            $current = GetValue($id);
-            if (is_int($current) || is_float($current)) {
-                $result['relative'] = true;
-                foreach ([-1, 0, 1] as $offset) {
-                    $value = $current + $offset;
-                    if (is_finite((float) $value) && $accept($value)) {
-                        $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
-                    }
-                }
-            }
+            $result['choices'][] = ['value' => $value, 'label' => $value . ' °C'];
         }
         usort($result['choices'], function ($a, $b) { return $a['value'] <=> $b['value']; });
         if (!$result['choices']) {

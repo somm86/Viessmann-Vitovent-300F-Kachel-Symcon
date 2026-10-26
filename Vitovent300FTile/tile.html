@@ -67,6 +67,7 @@ html,body{width:100%;height:100%;overflow:hidden}
 .setpoint-controls select{max-width:100%}.setpoint-controls button{cursor:pointer}
 .setpoint-controls :disabled{opacity:.5;cursor:default}.setpoint-controls :focus-visible{outline:2px solid #68d9ff;outline-offset:2px}
 @media(max-width:900px){.power-metrics{grid-template-columns:1fr 1fr}.setpoint-panel{grid-column:1/-1}}
+.filter-clock{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #274157;padding-top:12px;margin-top:14px;color:#9abdd6;font-size:12px}.filter-clock time{font-variant-numeric:tabular-nums;color:#e3f4ff;font-size:20px;line-height:1.1}
 </style>
 </head>
 <body>
@@ -114,9 +115,9 @@ html,body{width:100%;height:100%;overflow:hidden}
 </div></section>
 <section class="metrics" aria-label="Lüftungswerte und Steuerung">
 <article class="surface metric flow-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#wind"/></svg><div><h2>Volumenstrom Zuluft</h2><div class="metric-value" id="flow">—</div></div></div><div class="track" id="flowTrack" hidden><div class="fill" id="flowBar"></div></div><div class="metric-note" id="flowNote">Einheit aus Quellprofil</div><svg class="waves" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="waveShade" x2="0" y2="1"><stop stop-color="#039bdf" stop-opacity=".3"/><stop offset="1" stop-color="#039bdf" stop-opacity="0"/></linearGradient></defs><path d="M0 68C75 58 66 6 135 25S243 109 310 73 366 43 400 49V110H0Z" fill="url(#waveShade)" stroke="#006ba2"/><path d="M0 90C50 84 62 36 120 42S237 110 302 83 358 60 400 62" fill="none" stroke="#1ac4ff" stroke-width="2"/><path d="M0 35C68 25 74-3 126 10S226 80 295 48 349 37 400 23" fill="none" stroke="#00669c"/></svg><div class="art-note">Luftstrom · schematisch</div></article>
-<article class="surface metric filter-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#filter-icon"/></svg><div><h2>Filter</h2><div class="metric-note">Restlaufzeit</div><div class="metric-value" id="filter">—</div></div></div><div class="track" id="filterTrack" hidden><div class="fill" id="filterBar"></div></div><div class="metric-note" id="filterNote">Einheit aus Quellprofil</div></article>
+<article class="surface metric filter-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#filter-icon"/></svg><div><h2>Filter</h2><div class="metric-note">Restlaufzeit</div><div class="metric-value" id="filter">—</div></div></div><div class="track" id="filterTrack" hidden><div class="fill" id="filterBar"></div></div><div class="metric-note" id="filterNote">Einheit aus Quellprofil</div><div class="filter-clock"><span>Uhrzeit</span><time id="filterClock" aria-label="Aktuelle Uhrzeit">—</time></div></article>
 <article class="surface metric mode-panel"><div class="mode-heading"><svg class="icon"><use href="#fan"/></svg><h2>Betriebsart Lüftung</h2></div><div class="mode-buttons" id="modeButtons" role="group" aria-label="Betriebsart wählen"><div class="mode-empty">Auswahl wird geladen …</div></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p><button class="diagnosis" id="diagnosis" type="button" aria-expanded="false" aria-controls="diagnosticOutput">Diagnose anzeigen</button><pre class="diagnostic-output" id="diagnosticOutput" hidden></pre></article>
-</section><section class="power-metrics" aria-label="Lüftungssolltemperatur und Stromverbrauch"><article class="surface metric setpoint-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#thermo"/></svg><div><h2>Lüftung · Raumtemperatur Soll</h2><div class="metric-value" id="setpointValue">—</div></div></div><div class="setpoint-controls"><label for="setpointSelect">Solltemperatur · 1-°C-Schritte</label><select id="setpointSelect" aria-label="Solltemperatur in 1-Grad-Schritten wählen" disabled></select><button id="setpointApply" type="button" disabled>Übernehmen</button></div><p class="feedback" id="setpointFeedback" role="status" aria-live="polite"></p></article>
+</section><section class="power-metrics" aria-label="Lüftungssolltemperatur und Stromverbrauch"><article class="surface metric setpoint-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#thermo"/></svg><div><h2>Lüftung · Raumtemperatur Soll</h2><div class="metric-value" id="setpointValue">—</div></div></div><div class="setpoint-controls"><label for="setpointSelect">Solltemperatur · 15–30 °C</label><select id="setpointSelect" aria-label="Solltemperatur in 1-Grad-Schritten wählen" disabled></select><button id="setpointApply" type="button" disabled>Übernehmen</button></div><p class="feedback" id="setpointFeedback" role="status" aria-live="polite"></p></article>
 
 <article class="surface metric power-panel" data-history="power"><div class="metric-heading"><svg class="icon metric-icon"><use href="#bolt"/></svg><div><h2>Momentanleistung</h2><div class="metric-value" id="power">—</div><div class="metric-note" id="powerNote">Einheit aus Quellprofil</div></div></div><div class="history-hint">Verlauf öffnen</div></article>
 <article class="surface metric energy-panel" data-history="energy"><div class="metric-heading"><svg class="icon metric-icon"><use href="#energy-icon"/></svg><div><h2>Gesamtverbrauch</h2><div class="metric-value" id="energy">—</div><div class="metric-note" id="energyNote">Einheit aus Quellprofil</div></div></div><div class="monthly-energy"><span>Monatsverbrauch (laufend)</span><strong id="monthlyEnergy">—</strong></div><div class="metric-note" id="monthlyEnergyNote"></div><div class="history-hint">Verlauf öffnen</div></article>
@@ -173,6 +174,17 @@ function scheduleTileFit() {
     if (fitFrame === null) fitFrame = requestAnimationFrame(fitTile);
 }
 const number = value => value == null ? '—' : Number(value).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+function filterDuration(entry) {
+    const factors = {s: 1, sek: 1, sekunde: 1, sekunden: 1, sec: 1, second: 1, seconds: 1,
+        min: 60, minute: 60, minuten: 60, minutes: 60,
+        h: 3600, hr: 3600, stunde: 3600, stunden: 3600, hour: 3600, hours: 3600,
+        d: 86400, tag: 86400, tage: 86400, day: 86400, days: 86400};
+    const unit = (entry.unit || '').trim().toLowerCase().replace(/\./g, '');
+    const factor = factors[unit];
+    if (entry.value == null || !Number.isFinite(entry.value) || !factor) return null;
+    const minutes = Math.floor(Math.abs(entry.value) * factor / 60 + 1e-8);
+    return (entry.value < 0 ? '−' : '') + Math.floor(minutes / 60).toLocaleString('de-DE') + ' h ' + String(minutes % 60).padStart(2, '0') + ' min';
+}
 function modeIcon(label) {
     const text = label.toLocaleLowerCase('de-DE');
     if (/grund|normal|auto|eco/.test(text)) return 'leaf';
@@ -195,8 +207,9 @@ function render(data) {
     for (const key of ['outside', 'supply', 'extract', 'exhaust']) byId(key).textContent = number(data.values[key].value);
     for (const key of ['flow', 'filter']) {
         const entry = data.values[key];
-        byId(key).textContent = entry.formatted;
-        byId(key + 'Note').textContent = entry.value === null ? 'Quellvariable nicht verfügbar' : entry.hasUnit ? 'Originalwert aus IP-Symcon' : 'Quellprofil ohne Einheit';
+        const duration = key === 'filter' ? filterDuration(entry) : null;
+        byId(key).textContent = duration || entry.formatted;
+        byId(key + 'Note').textContent = entry.value === null ? 'Quellvariable nicht verfügbar' : key === 'filter' ? (duration ? 'Restzeit aus Quelle · umgerechnet aus ' + entry.unit : 'Zeiteinheit im Quellprofil nicht eindeutig') : entry.hasUnit ? 'Originalwert aus IP-Symcon' : 'Quellprofil ohne Einheit';
         const range = entry.range;
         const validRange = entry.value !== null && range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.max > range.min;
         byId(key + 'Track').hidden = !validRange;
@@ -346,7 +359,7 @@ function renderSetpoint(data) {
     byId('setpointApply').disabled = disabled;
     let hint = config.reason || (typeof requestAction !== 'function' ? 'Steuerung nur in der Symcon-Kachel verfügbar.' : '');
     if (!hint && config.min != null) hint = 'Bereich laut Quelle: ' + config.min + ' bis ' + config.max + ' °C' + (config.step ? ' · Schritt ' + config.step : '');
-    if (!hint && config.relative) hint = 'Aktueller Sollwert ±1 °C · keine Quellgrenzen hinterlegt; Geräteaktion prüft die Eingabe.';
+    if (!hint) hint = 'Auswahl 15–30 °C · 1-°C-Schritte · Quellvorgaben werden berücksichtigt.';
     byId('setpointFeedback').textContent = setpointError || (setpointPending !== null ? 'Solltemperatur gesendet · warte auf Quellwert …' : hint);
 }
 byId('setpointSelect').addEventListener('change', () => { setpointDirty = true; setpointError = ''; });
@@ -535,8 +548,15 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', sche
 if (document.fonts) document.fonts.ready.then(scheduleTileFit);
 render(INITIAL);
 scheduleTileFit();
+function updateClock() {
+    const now = new Date();
+    byId('filterClock').textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    byId('filterClock').dateTime = now.toISOString();
+}
+updateClock();
 let sdkAvailable = typeof requestAction === 'function';
 setInterval(() => {
+    updateClock();
     const available = typeof requestAction === 'function';
     if (available !== sdkAvailable) {
         sdkAvailable = available;

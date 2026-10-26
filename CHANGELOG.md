@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.13 · Build 14 · 2026-10-26
+
+- Gewünschten Solltemperaturbereich 15–30 °C in ganzen 1-°C-Schritten festgelegt; vorhandene Quellvorgaben zusätzlich beachten.
+- Filterrestzeit anhand der echten Einheit in Stunden und Minuten anzeigen; bei unbekannter Einheit Originalwert statt geratener Umrechnung.
+- Aktuelle Browser-Uhrzeit mit Sekunden in der Filterkarte ergänzt, unabhängig von Messwertupdates.
+
 ## 1.12 · Build 13 · 2026-10-26
 
 - Lüftungs-Solltemperatur ausschließlich als Dropdown mit Änderungen in 1-°C-Schritten und Übernehmen-Button.

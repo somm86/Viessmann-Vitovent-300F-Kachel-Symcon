@@ -124,7 +124,7 @@ with sync_playwright() as p:
     for key, value in {'outside': 15.6, 'supply': 22.3, 'extract': 22.4, 'exhaust': 16.8}.items():
         demo['values'][key]['value'] = value
     demo['values']['flow'].update(value=85, formatted='85 m³/h', hasUnit=True, range={'min': 0, 'max': 200})
-    demo['values']['filter'].update(value=281, formatted='281 Tage', hasUnit=True, range={'min': 0, 'max': 365})
+    demo['values']['filter'].update(value=281, formatted='281 Tage', hasUnit=True, unit='Tage', range={'min': 0, 'max': 365})
     demo['values']['power'].update(value=37, formatted='37 W', hasUnit=True, unit='W')
     demo['values']['energy'].update(value=952.6, formatted='952,60 kWh', hasUnit=True, unit='kWh')
     demo['monthlyEnergy'] = {'value': .281, 'unit': 'kWh', 'reason': '', 'timezone': 'Europe/Vienna'}
@@ -140,6 +140,7 @@ with sync_playwright() as p:
     check(page.locator('#flowTrack').is_hidden(), 'missing source range hides flow bar')
     check(page.locator('#filterTrack').is_hidden(), 'missing source range hides filter bar')
     page.evaluate('handleMessage', json.dumps(demo))
+    check(page.locator('#filter').inner_text() == '6.744 h 00 min', 'filter days converted to hours and minutes using source unit')
     check(page.locator('#flowBar').evaluate('el => el.style.width') == '42.5%', 'bar uses actual supplied source range')
     symbol_sizes = {}
     for width in [1536, 1180, 800, 700, 360, 320]:
@@ -334,7 +335,7 @@ with sync_playwright() as p:
     check(page.locator('#setpointSelect').is_visible(), 'setpoint dropdown always visible')
     check(page.locator('#setpointValue').inner_text() == '24,0 °C', 'ventilation setpoint is shown')
     labels = page.locator('#setpointSelect option').all_text_contents()
-    check(labels[1:] == [f'{value} °C' for value in range(16, 29)], 'dropdown covers real bounds in exactly 1-degree steps')
+    check(labels[1:] == [f'{value} °C' for value in range(15, 31)], 'dropdown covers real bounds in exactly 1-degree steps')
     page.locator('#setpointSelect').select_option(label='23 °C')
     sensor_data = copy.deepcopy(setpoint_data)
     sensor_data['values']['outside']['value'] = 15.7
@@ -347,7 +348,7 @@ with sync_playwright() as p:
     sensor_data['values']['setpoint']['value'] = 23
     page.evaluate('handleMessage', json.dumps(sensor_data))
     check(page.locator('#setpointValue').inner_text() == '23,0 °C' and page.locator('#setpointApply').is_enabled(), 'source value confirms setpoint')
-    check('30 °C' not in labels and '23.5 °C' not in labels, 'out-of-range and half-degree choices absent')
+    check('31 °C' not in labels and '23.5 °C' not in labels, 'out-of-range and half-degree choices absent')
     page.locator('#setpointSelect').select_option(label='24 °C')
     page.locator('#setpointApply').click()
     denied = copy.deepcopy(sensor_data)
@@ -365,9 +366,9 @@ with sync_playwright() as p:
     page.evaluate('handleMessage', json.dumps(select_data))
     no_bounds = copy.deepcopy(setpoint_data)
     no_bounds['setpoint'].update(min=None, max=None, sourceStep=None, relative=True,
-        choices=[{'value': v, 'label': f'{v} °C'} for v in [23, 24, 25]])
+        choices=[{'value': v, 'label': f'{v} °C'} for v in range(15,31)])
     page.evaluate('handleMessage', json.dumps(no_bounds))
-    check(page.locator('#setpointSelect option').all_text_contents()[1:] == ['23 °C', '24 °C', '25 °C'], 'unknown bounds offer only current plus/minus one')
+    check(page.locator('#setpointSelect option').all_text_contents()[1:] == [f'{v} °C' for v in range(15,31)], 'requested absolute range applies when native bounds absent')
     readonly_setpoint = copy.deepcopy(no_bounds)
     readonly_setpoint['setpoint'].update(writable=False, reason='Solltemperaturaktion deaktiviert')
     page.evaluate('handleMessage', json.dumps(readonly_setpoint))
@@ -381,6 +382,18 @@ with sync_playwright() as p:
         page.set_viewport_size({'width': width, 'height': height})
         page.wait_for_function("document.querySelector('.dashboard').getBoundingClientRect().bottom <= innerHeight + 1")
         check(page.locator('#setpointSelect').is_visible(), f'dropdown visible in {width}x{height} tile')
+    duration_case = copy.deepcopy(demo)
+    for value, unit, expected in [(2.5, 'Tage', '60 h 00 min'), (1.5, 'h', '1 h 30 min'), (90, 'min', '1 h 30 min'), (5400, 's', '1 h 30 min'), (0, 'h', '0 h 00 min')]:
+        duration_case['values']['filter'].update(value=value, unit=unit, formatted='fixture')
+        page.evaluate('handleMessage', json.dumps(duration_case))
+        check(page.locator('#filter').inner_text() == expected, 'remaining time converted only according to explicit source unit')
+    duration_case['values']['filter'].update(value=10, unit='unknown', formatted='10 source units')
+    page.evaluate('handleMessage', json.dumps(duration_case))
+    check(page.locator('#filter').inner_text() == '10 source units', 'unknown duration unit is not guessed')
+    check(page.locator('#filterClock').inner_text().count(':') == 2, 'current clock includes hours minutes seconds')
+    before = page.locator('#filterClock').inner_text()
+    page.clock.fast_forward(2000)
+    check(page.locator('#filterClock').inner_text() != before, 'clock advances without new sensor values')
     check(errors == [], f'no browser exceptions: {errors}')
     browser.close()
 print(f'PASS: {checks} browser assertions (simulated HTML-SDK bridge)')
