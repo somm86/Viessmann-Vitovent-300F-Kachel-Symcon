@@ -113,7 +113,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.15.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.15.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.16.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.16.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

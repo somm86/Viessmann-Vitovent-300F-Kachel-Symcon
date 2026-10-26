@@ -148,6 +148,7 @@ with sync_playwright() as p:
         check(page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'no overflow at {width}px')
         for selector in ['#outside', '#supply', '#extract', '#exhaust', '#modeButtons']:
             check(page.locator(selector).is_visible(), f'{selector} visible at {width}px')
+        check(page.locator('.device').evaluate('el => { const d=el.getBoundingClientRect(), h=document.querySelector(".hero").getBoundingClientRect(); return d.top>=h.top && d.bottom<=h.bottom && d.left>=h.left && d.right<=h.right; }'), f'exchanger stays inside hero at {width}px')
         if width in [1536, 360]:
             symbol_sizes[width] = {selector: page.locator(selector).first.bounding_box()['width'] for selector in ['.outside > .icon', '.metric-icon', '.mode-button .icon', '.device']}
             page.screenshot(path=str(ROOT / f'tests/output/dashboard-{width}.png'), full_page=True, animations='disabled')

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.16 · Build 17 · 2026-10-26
+
+- Optik an neue Vorlage angepasst: metallischer Kreuzwärmetauscher mit Ventilatoren und Filtereinsätzen, warme obere und blaue untere Luftkanäle.
+- Kompakte Temperaturanzeigen, dunkelblaue Paneele, grüne Filteranzeige und neu angeordnete Lüftungs-/Energiekarten.
+- Zentrale Solltemperaturauswahl, echte Betriebsarten und alle Archivdiagramme beibehalten; keine Heizungswerte übernommen.
+
 ## 1.15 · Build 16 · 2026-10-26
 
 - Zentrale Raum-Solltemperatur im Gerätesymbol direkt anklickbar und per Enter/Leertaste bedienbar.
