@@ -14,7 +14,7 @@ In Module Control die Repository-URL hinzufügen, veröffentlichten Branch ausw�
 
 ## Lokal mit dem ZIP
 
-1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.13.zip.sha256`).
+1. ZIP und SHA-256-Datei zusammen herunterladen. Falls möglich die Prüfsumme prüfen (`sha256sum -c Vitovent300F-Kachel-1.14.zip.sha256`).
 2. Auf dem Symcon-Server das Datenverzeichnis ermitteln. Es lässt sich im Skripteditor mit `echo IPS_GetKernelDir();` anzeigen. Typisch unter Linux `/var/lib/symcon/`; bei Containern zählt das Verzeichnis **im Container**. Unter Windows den tatsächlichen Datenpfad verwenden.
 3. Den entpackten Ordner nach `<Datenverzeichnis>/modules/Vitovent300F_Kachel/` kopieren. Beispiel: `/var/lib/symcon/modules/Vitovent300F_Kachel/library.json`. Keine zusätzliche gleichnamige Ordnerebene einfügen. Lesezugriff für den Symcon-Dienst sicherstellen.
 4. Den IP-Symcon-Dienst über die vorhandene Dienst-/Containerverwaltung neu starten. Vorher eigene Konfiguration sichern. Keine zweite Kopie derselben Bibliothek installieren.
@@ -83,8 +83,8 @@ Beim Modul-Update verarbeitet `Migrate()` die gespeicherte Instanzkonfiguration.
 
 Für die Solltemperatur muss 41384 numerisch sein und eine gültige Variablenaktion besitzen. Quellprofile oder Darstellungen bestimmen Grenzen, Schrittweite und gegebenenfalls Auswahlwerte. Prüfen, ob „Solltemperatur-Diagnose anzeigen“ die tatsächlichen Werte liefert. Dann einen vor Ort sinnvollen Wert im Dropdown auswählen, übernehmen und sowohl Quellvariable als auch tatsächliche Gerätewirkung kontrollieren; danach bei Bedarf den vorherigen Sollwert wiederherstellen. Der Cloud-Test hat keine echte Geräteaktion ausgeführt. Ab 1.12 wird nur ein Dropdown verwendet: 1-°C-Schritte innerhalb vorhandener Grenzen und unter Beachtung deklarierter Quellschritte/Auswahlwerte. Ab 1.13 ist der gewünschte Bereich ausdrücklich 15–30 °C in ganzen 1-°C-Schritten, auch ohne Quellgrenzen. Vorhandene Quellgrenzen und Schritte bleiben bindend. Die Geräteaktion muss ihre eigenen zulässigen Werte durchsetzen.
 
-## Filterrestzeit und Uhrzeit ab 1.13
+## Filterrestzeit und Sollwertposition ab 1.14
 
-Die Filterquelle benötigt eine eindeutige Zeiteinheit im Profil bzw. in der Darstellung. Unterstützt werden Sekunden, Minuten, Stunden und Tage mit üblichen deutschen/englischen Abkürzungen. Beispiel: 280 Tage entsprechen 6.720 h 00 min. Die tatsächliche Auflösung bleibt die des Geräts. Bei unklarer Einheit bleibt der Originalwert sichtbar; die Kachel rät keinen Umrechnungsfaktor.
+Nach dem Update Instanz übernehmen und Kachel neu öffnen. Die Filterrestzeit steht wieder in Tagen. Stunden-/Minuten-/Sekundenquellen werden anhand ihrer tatsächlichen Einheit in Tage umgerechnet; ohne eindeutige Einheit bleibt der ursprüngliche Wert mit Hinweis sichtbar. Die aktuelle Uhrzeit bleibt in der Filterkarte erhalten.
 
-Die Uhr in der Filterkarte ist die aktuelle Uhrzeit des Browsers. Sie aktualisiert sich jede Sekunde, ohne neue Gerätewerte anzufordern. Ein tatsächliches Filterablaufdatum wird daraus nicht abgeleitet.
+Der bestätigte Raum-Sollwert ist mittig im zentralen Gerätesymbol positioniert. Die untere Solltemperaturkarte enthält weiterhin Dropdown und Übernehmen. Beim Schalten muss der Wert im Symbol zunächst unverändert bleiben und erst mit dem bestätigten Quellwert wechseln. Die zentrierte Position und die Quellbestätigung sind im Browser geprüft.

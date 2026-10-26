@@ -85,8 +85,8 @@ Die Kachel erhält ab 1.12 ausschließlich ein Dropdown im 1-°C-Raster und eine
 
 `setpoint.choices` wird aus dem vom Nutzer vorgegebenen Bereich **15 bis 30 °C in 1-°C-Schritten** erzeugt. Vorhandene Quellgrenzen, native Schrittweite und konkrete Assoziationen werden zusätzlich geprüft. Ausgeschlossene Werte erscheinen nicht in der Auswahl. Ohne native Grenzen gilt der explizit angeforderte Bereich 15–30. `step=1` beschreibt das UI-Raster und `sourceStep` die ursprüngliche Quellschrittweite. Vor jedem Request berechnet der Server die Liste neu und akzeptiert nur aktuell angebotene Werte. Die Quellprofile selbst bleiben unverändert.
 
-## Filterzeit und Uhr
+## Filterzeit, Uhr und zentrale Sollwertanzeige ab 1.14
 
-Die Oberfläche rechnet den tatsächlichen Filterwert anhand von `values.filter.unit` um. Erkannt werden s/sek/sec und ausgeschriebene Sekunden, min und ausgeschriebene Minuten, h/hr und ausgeschriebene Stunden sowie d/Tag/Tage/day/days. Ganze verbleibende Minuten werden angezeigt; Tageswerte werden mit 24 Stunden pro Tag umgerechnet. Fehlende oder unbekannte Einheiten führen nicht zu einer angenommenen Umrechnung. Der Quellwert selbst und der profilbasierte Balken werden nicht verändert.
+Die Oberfläche zeigt die tatsächliche Filterrestzeit in Tagen. Explizit erkannte Zeiteinheiten (Sekunden, Minuten, Stunden, Tage) werden in Tage umgerechnet, unbekannte Einheiten nicht geraten. Die Anzeige nutzt höchstens zwei Nachkommastellen; Rohwert und profilbasierter Bereichsbalken bleiben unverändert. `filterClock` zeigt weiterhin die lokale Browser-Uhrzeit und wird über den bestehenden 1-Sekunden-Timer aktualisiert.
 
-`filterClock` erhält jede Sekunde die lokale Browser-Uhrzeit mit Stunden/Minuten/Sekunden. Der schon vorhandene 1-Sekunden-Frontend-Timer übernimmt diese Aktualisierung; dafür wird weder das Gerät abgefragt noch eine Ablaufprognose berechnet.
+`setpointValue` liegt als SVG-Text im mittigen `setpoint-readout` des zentralen Gerätesymbols. `renderSetpoint` setzt ausschließlich `textContent` und ergänzt den zugänglichen SVG-Beschreibungstext. Die alte separate Wertanzeige in der unteren Bedienkarte ist entfernt; Dropdown und Übernehmen bleiben erhalten. Quellbestätigung, Fehlerbehandlung und native Aktionsweiterleitung sind unverändert.

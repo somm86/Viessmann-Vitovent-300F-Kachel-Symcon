@@ -50,11 +50,13 @@ Auf die jeweilige Karte klicken, um den Verlauf mit der vorhandenen Zeitbereichs
 
 Das Modul erkennt die Archivierungsart automatisch und ändert sie nicht. Auch Einheiten im Diagramm stammen aus dem Profil bzw. der Darstellung. Wenn keine Einheit hinterlegt ist, wird „Quelleneinheit“ gemeldet. Gesamtverbrauch, Monatsverbrauch sowie Werte und Tooltips im Verbrauchsdiagramm haben genau **zwei Nachkommastellen**. Die Angaben im Screenshot sind Beispieldaten; auf der Anlage werden die tatsächlichen Werte geladen.
 
-## Filterrestzeit und Uhrzeit ab 1.13
+## Filterrestzeit, Uhrzeit und Sollwertanzeige ab 1.14
 
-Die Filterrestzeit wird als **Stunden und Minuten** angezeigt, z.B. 281 Tage → 6.744 h 00 min oder 1,5 Stunden → 1 h 30 min. Maßgeblich ist die im Quellprofil hinterlegte Einheit (Sekunden, Minuten, Stunden oder Tage). Die Umrechnung erzeugt keine feinere Messauflösung: Liefert das Gerät nur ganze Tage, bleiben die Minuten entsprechend 00. Bei unbekannter Einheit wird der ursprüngliche formatierte Wert mit einem Hinweis angezeigt. Der Gerätewert und die Filterprotokollierung bleiben unverändert; es gibt keinen künstlichen Sekundencountdown.
+Die Filterrestzeit wird wieder in **Tagen** angezeigt. Liegt die Quelle bereits in Tagen vor, bleibt der Tageswert erhalten; Sekunden, Minuten und Stunden werden anhand der tatsächlichen Einheit in Tage umgerechnet. Unbekannte Einheiten werden nicht geraten. Die Gerätewerte bleiben unverändert.
 
-Darunter zeigt eine Uhr die **aktuelle lokale Browser-Uhrzeit (HH:mm:ss)**, unabhängig von Messwertupdates. Dies ist kein angenommener Ablaufzeitpunkt der Filterwartung.
+Die Raum-Solltemperatur wird **mittig im zentralen Gerätesymbol** als Livewert angezeigt. Dropdown (15–30 °C) und Übernehmen-Button bleiben zur Bedienung in der unteren Karte. Erst ein Quellwertupdate bestätigt eine Anforderung; vorher bleibt der bisherige Wert im Symbol stehen.
+
+Die Uhr in der Filterkarte zeigt weiterhin die aktuelle lokale Browser-Uhrzeit (HH:mm:ss), unabhängig von Messwertupdates.
 
 ## Kachelgröße
 
@@ -75,7 +77,7 @@ Das Dashboard nutzt die vollständige Kachelbreite und passt gleichzeitig in die
 | Gesamtverbrauch | 50335 | `EnergyID` |
 | Lüftung Raumtemperatur Soll | 41384 | `SetpointID` |
 
-Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Der Volumenstrom verwendet `GetValueFormatted()`. Die Filterrestzeit wird anhand der tatsächlichen Quelleneinheit in Stunden und Minuten umgerechnet; unbekannte Einheiten werden nicht geraten. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
+Die Variablen müssen bereits von deiner Geräteintegration aktualisiert werden. Das Modul spricht das Gerät nicht selbst an und benötigt keine Viessmann-Zugangsdaten. Es legt keine Messvariablen an und verändert keine Quellprofile. Temperaturwerte müssen in °C vorliegen. Der Volumenstrom verwendet `GetValueFormatted()`. Die Filterrestzeit wird anhand der tatsächlichen Quelleneinheit in Tagen dargestellt; unbekannte Einheiten werden nicht geraten. Balken werden nur angezeigt, wenn das echte Quellprofil bzw. die Darstellung einen gültigen Min-/Max-Bereich liefert. Filtertage und Maximalvolumenströme werden nicht angenommen. Die Wellen sind ausdrücklich schematische Dekoration, keine Messhistorie.
 
 ## Betriebsart: ausschließlich vorhandene Werte
 
@@ -111,7 +113,7 @@ python3 tests/build.py
 python3 tests/package_test.py
 ```
 
-Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.13.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.13.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
+Der Build erzeugt `docs/downloads/Vitovent300F-Kachel-1.14.zip`, das separate Quellpaket `docs/downloads/Vitovent300F-GitHub-1.14.zip` und jeweils eine SHA-256-Datei. Das ZIP enthält einen Bibliotheksordner mit `library.json`, Modul und Dokumentation. Tests, Git-Daten und Testprofile sind nicht im Laufzeitmodul. Der GitHub-Workflow prüft PHP, Manifeste und Browser und stellt das ZIP als Build-Artefakt bereit. Der Workflow wurde lokal vorbereitet, jedoch noch nicht auf GitHub ausgeführt.
 
 [Prüfbericht und Grenzen](docs/VALIDATION.md) · [API-Verwendung und Quellen](docs/API.md) · [Änderungen](CHANGELOG.md)
 

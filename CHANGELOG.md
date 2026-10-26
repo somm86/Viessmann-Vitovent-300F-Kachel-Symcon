@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.14 · Build 15 · 2026-10-26
+
+- Filterrestzeit wieder in Tagen anzeigen, anhand der tatsächlichen Quelleneinheit.
+- Raum-Solltemperatur als Livewert mittig im zentralen Gerätesymbol positioniert; separate untere Wertanzeige entfernt.
+- Dropdown 15–30 °C, Übernehmen-Button und aktuelle Uhrzeit bleiben erhalten.
+- Zentrierung sowie Live-Bestätigung im Browser geprüft.
+
 ## 1.13 · Build 14 · 2026-10-26
 
 - Gewünschten Solltemperaturbereich 15–30 °C in ganzen 1-°C-Schritten festgelegt; vorhandene Quellvorgaben zusätzlich beachten.
