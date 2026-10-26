@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.17 · Build 18 · 2026-10-26
+
+- Optische Änderung aus Version 1.16 zurückgenommen; Dashboardgestaltung aus Version 1.15 wiederhergestellt.
+- Anklickbare zentrale Solltemperatur mit Dropdown und vorhandene Diagramme bleiben erhalten.
+
 ## 1.16 · Build 17 · 2026-10-26
 
 - Optik an neue Vorlage angepasst: metallischer Kreuzwärmetauscher mit Ventilatoren und Filtereinsätzen, warme obere und blaue untere Luftkanäle.
