@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.12 · Build 13 · 2026-10-26
+
+- Lüftungs-Solltemperatur ausschließlich als Dropdown mit Änderungen in 1-°C-Schritten und Übernehmen-Button.
+- Native Grenzen, Schrittweiten und konkrete Auswahlwerte weiter beachten; keine erfundenen Zwischenwerte.
+- Ohne deklarierte Grenzen nur aktueller Sollwert sowie ±1 °C zur Auswahl anbieten. Bestehenden Nachkommaanteil bei relativen 1-°C-Änderungen erhalten.
+- Server akzeptiert ausschließlich die frisch berechneten Dropdownwerte; freie und Halbgrad-Eingaben entfernt.
+
 ## 1.11 · Build 12 · 2026-10-26
 
 - Lüftungs-IDs aktualisiert: 31044 / 42234 / 58476 / 22909 / 34190 / 38673 / 28301. Stromquellen unverändert.

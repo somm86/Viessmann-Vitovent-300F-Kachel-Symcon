@@ -353,16 +353,16 @@ IPS_SetVariableCustomAction($setpoint, $action);
 SetValue($setpoint, 24.0);
 IPS_ApplyChanges($id);
 $config = snapshot($module)['setpoint'];
-check($config['writable'] && $config['min'] === 16 && $config['max'] === 28 && $config['step'] === .5, 'real profile limits and step exposed');
-$module->RequestAction('SetRoomTemperature', 23.5);
-check($GLOBALS['captured']['VARIABLE'] === $setpoint && $GLOBALS['captured']['VALUE'] === 23.5, 'setpoint dispatched to correct source as float');
-check(snapshot($module)['values']['setpoint']['value'] === 23.5, 'setpoint source confirmation displayed');
-foreach (['24', true, null, [], INF, NAN, 15.5, 28.5, 23.3] as $invalid) {
+check($config['writable'] && $config['min'] === 16 && $config['max'] === 28 && $config['step'] === 1 && $config['sourceStep'] === .5, 'one-degree UI step preserves native profile step');
+$module->RequestAction('SetRoomTemperature', 23);
+check($GLOBALS['captured']['VARIABLE'] === $setpoint && $GLOBALS['captured']['VALUE'] === 23.0, 'setpoint dispatched to correct source as float');
+check(snapshot($module)['values']['setpoint']['value'] === 23, 'setpoint source confirmation displayed');
+foreach (['24', true, null, [], INF, NAN, 15.5, 28.5, 23.3, 23.5] as $invalid) {
     rejects(function () use ($module, $invalid) { $module->RequestAction('SetRoomTemperature', $invalid); }, 'invalid or out-of-profile setpoint');
 }
 check(snapshot($module)['setpointError'] !== '', 'setpoint errors published independently');
-IPS_SetVariableProfileValues('Fixture.Setpoint', 18, 26, 1);
-rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 23.5); }, 'stale setpoint step revalidated');
+IPS_SetVariableProfileValues('Fixture.Setpoint', 18, 26, 2);
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 23); }, 'stale setpoint step revalidated');
 $module->RequestAction('SetRoomTemperature', 24);
 check($GLOBALS['captured']['VALUE'] === 24.0 && snapshot($module)['setpointError'] === '', 'successful setpoint clears error and retains float type');
 IPS\VariableManager::setVariableAction($setpoint, $target);
@@ -372,17 +372,21 @@ IPS_SetVariableCustomAction($setpoint, $action);
 IPS_SetVariableCustomPresentation($setpoint, ['PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
     'OPTIONS' => json_encode([['Value' => 22.5, 'Caption' => 'Fixture 22.5'], ['Value' => 24, 'Caption' => 'Fixture 24']])]);
 $config = json_decode($module->GetSetpointDiagnostics(), true);
-check(array_column($config['choices'], 'value') === [22.5, 24], 'real enumeration setpoint values exposed');
-$module->RequestAction('SetRoomTemperature', 22.5);
+check(array_column($config['choices'], 'value') === [24], 'real enumeration setpoint values exposed');
+$module->RequestAction('SetRoomTemperature', 24);
 rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 23); }, 'unknown setpoint association');
 IPS_SetVariableCustomProfile($setpoint, 'Fixture.Setpoint');
 // Absence of configured limits must not invent a min/max or step.
 IPS_SetVariableProfileValues('Fixture.Setpoint', 0, 0, 0);
 $config = json_decode($module->GetSetpointDiagnostics(), true);
-check($config['min'] === null && $config['max'] === null && $config['step'] === null, 'missing source limits remain absent');
-$module->RequestAction('SetRoomTemperature', 22.2);
-check($GLOBALS['captured']['VALUE'] === 22.2, 'manual numeric value delegates to native action when no limits declared');
+check($config['min'] === null && $config['max'] === null && $config['sourceStep'] === null && $config['step'] === 1, 'missing source limits remain absent');
+$module->RequestAction('SetRoomTemperature', 23);
+check($GLOBALS['captured']['VALUE'] === 23.0 && $config['relative'], 'without bounds only current minus/plus one-degree choices are offered');
+rejects(function () use ($module) { $module->RequestAction('SetRoomTemperature', 20); }, 'no arbitrary absolute range without source limits');
 IPS_SetVariableProfileValues('Fixture.Setpoint', 16, 28, .5);
+SetValue($setpoint, 24.5);
+$config = json_decode($module->GetSetpointDiagnostics(), true);
+check(array_column($config['choices'], 'value') === range(16.5, 27.5, 1), 'one-degree changes retain a fractional current setpoint');
 SetValue($setpoint, 24.0);
 IPS_ApplyChanges($id);
 if (!is_dir(__DIR__ . '/output')) { mkdir(__DIR__ . '/output', 0777, true); }

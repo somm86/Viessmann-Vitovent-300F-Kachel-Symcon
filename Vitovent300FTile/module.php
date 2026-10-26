@@ -218,6 +218,53 @@ class Vitovent300FTile extends IPSModule
                 }
             }
         }
+        // The user interface uses 1 °C increments, without changing the source profile.
+        $result['sourceStep'] = $result['step'];
+        $result['step'] = 1;
+        $result['relative'] = false;
+        $current = GetValue($id);
+        $gridOffset = (is_int($current) || is_float($current)) && is_finite((float) $current) ? $current - floor($current) : 0;
+        $nativeChoices = $result['choices'];
+        $result['choices'] = [];
+        $accept = function ($candidate) use ($result) {
+            if ($result['min'] !== null && ($candidate < $result['min'] || $candidate > $result['max'])) return false;
+            if ($result['sourceStep'] !== null) {
+                $steps = ($candidate - ($result['min'] ?? 0)) / $result['sourceStep'];
+                if (abs($steps - round($steps)) > 0.000001) return false;
+            }
+            return true;
+        };
+        if ($nativeChoices) {
+            foreach ($nativeChoices as $choice) {
+                $value = $choice['value'];
+                if (abs(($value - $gridOffset) - round($value - $gridOffset)) < 0.000001 && $accept($value)) {
+                    $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
+                }
+            }
+        } elseif ($result['min'] !== null) {
+            if ($result['max'] - $result['min'] <= 1000) {
+                for ($value = ceil($result['min'] - $gridOffset) + $gridOffset; $value <= $result['max']; $value++) {
+                    if ($accept($value)) $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
+                }
+            }
+        } else {
+            // No invented absolute limits: permit only current -1/current/current +1.
+            $current = GetValue($id);
+            if (is_int($current) || is_float($current)) {
+                $result['relative'] = true;
+                foreach ([-1, 0, 1] as $offset) {
+                    $value = $current + $offset;
+                    if (is_finite((float) $value) && $accept($value)) {
+                        $result['choices'][] = ['value' => $value, 'label' => (string) $value . ' °C'];
+                    }
+                }
+            }
+        }
+        usort($result['choices'], function ($a, $b) { return $a['value'] <=> $b['value']; });
+        if (!$result['choices']) {
+            $result['reason'] = 'Keine passenden Solltemperaturen in 1-°C-Schritten innerhalb der Quellvorgaben verfügbar.';
+            return $result;
+        }
         $action = ($variable['VariableCustomAction'] ?? 0) > 0 ? $variable['VariableCustomAction'] : ($variable['VariableAction'] ?? 0);
         $result['actionID'] = $action;
         if ($action < 10000 || (!IPS_InstanceExists($action) && !IPS_ScriptExists($action))) {

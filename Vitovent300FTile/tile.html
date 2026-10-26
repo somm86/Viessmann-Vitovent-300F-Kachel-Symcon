@@ -63,8 +63,8 @@ html,body{width:100%;height:100%;overflow:hidden}
 .power-metrics .setpoint-panel{cursor:default}.setpoint-panel .metric-icon{color:#7cdcff}
 .setpoint-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 .setpoint-controls label{font-size:11px;color:#9abdd5;flex-basis:100%}
-.setpoint-controls input,.setpoint-controls select,.setpoint-controls button{font:inherit;font-size:13px;border:1px solid #3b637f;border-radius:7px;background:#102f46;color:#edf8ff;padding:9px;min-width:0}
-.setpoint-controls input{width:90px}.setpoint-controls select{max-width:100%}.setpoint-controls button{cursor:pointer}
+.setpoint-controls select,.setpoint-controls button{font:inherit;font-size:13px;border:1px solid #3b637f;border-radius:7px;background:#102f46;color:#edf8ff;padding:9px;min-width:0}
+.setpoint-controls select{max-width:100%}.setpoint-controls button{cursor:pointer}
 .setpoint-controls :disabled{opacity:.5;cursor:default}.setpoint-controls :focus-visible{outline:2px solid #68d9ff;outline-offset:2px}
 @media(max-width:900px){.power-metrics{grid-template-columns:1fr 1fr}.setpoint-panel{grid-column:1/-1}}
 </style>
@@ -116,7 +116,7 @@ html,body{width:100%;height:100%;overflow:hidden}
 <article class="surface metric flow-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#wind"/></svg><div><h2>Volumenstrom Zuluft</h2><div class="metric-value" id="flow">—</div></div></div><div class="track" id="flowTrack" hidden><div class="fill" id="flowBar"></div></div><div class="metric-note" id="flowNote">Einheit aus Quellprofil</div><svg class="waves" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="waveShade" x2="0" y2="1"><stop stop-color="#039bdf" stop-opacity=".3"/><stop offset="1" stop-color="#039bdf" stop-opacity="0"/></linearGradient></defs><path d="M0 68C75 58 66 6 135 25S243 109 310 73 366 43 400 49V110H0Z" fill="url(#waveShade)" stroke="#006ba2"/><path d="M0 90C50 84 62 36 120 42S237 110 302 83 358 60 400 62" fill="none" stroke="#1ac4ff" stroke-width="2"/><path d="M0 35C68 25 74-3 126 10S226 80 295 48 349 37 400 23" fill="none" stroke="#00669c"/></svg><div class="art-note">Luftstrom · schematisch</div></article>
 <article class="surface metric filter-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#filter-icon"/></svg><div><h2>Filter</h2><div class="metric-note">Restlaufzeit</div><div class="metric-value" id="filter">—</div></div></div><div class="track" id="filterTrack" hidden><div class="fill" id="filterBar"></div></div><div class="metric-note" id="filterNote">Einheit aus Quellprofil</div></article>
 <article class="surface metric mode-panel"><div class="mode-heading"><svg class="icon"><use href="#fan"/></svg><h2>Betriebsart Lüftung</h2></div><div class="mode-buttons" id="modeButtons" role="group" aria-label="Betriebsart wählen"><div class="mode-empty">Auswahl wird geladen …</div></div><p class="feedback" id="feedback" role="status" aria-live="polite"></p><button class="diagnosis" id="diagnosis" type="button" aria-expanded="false" aria-controls="diagnosticOutput">Diagnose anzeigen</button><pre class="diagnostic-output" id="diagnosticOutput" hidden></pre></article>
-</section><section class="power-metrics" aria-label="Lüftungssolltemperatur und Stromverbrauch"><article class="surface metric setpoint-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#thermo"/></svg><div><h2>Lüftung · Raumtemperatur Soll</h2><div class="metric-value" id="setpointValue">—</div></div></div><div class="setpoint-controls"><label for="setpointInput">Solltemperatur in °C</label><input id="setpointInput" type="number" inputmode="decimal" step="any" disabled><select id="setpointSelect" aria-label="Solltemperatur aus Quellprofil wählen" hidden disabled></select><button id="setpointApply" type="button" disabled>Übernehmen</button></div><p class="feedback" id="setpointFeedback" role="status" aria-live="polite"></p></article>
+</section><section class="power-metrics" aria-label="Lüftungssolltemperatur und Stromverbrauch"><article class="surface metric setpoint-panel"><div class="metric-heading"><svg class="icon metric-icon"><use href="#thermo"/></svg><div><h2>Lüftung · Raumtemperatur Soll</h2><div class="metric-value" id="setpointValue">—</div></div></div><div class="setpoint-controls"><label for="setpointSelect">Solltemperatur · 1-°C-Schritte</label><select id="setpointSelect" aria-label="Solltemperatur in 1-Grad-Schritten wählen" disabled></select><button id="setpointApply" type="button" disabled>Übernehmen</button></div><p class="feedback" id="setpointFeedback" role="status" aria-live="polite"></p></article>
 
 <article class="surface metric power-panel" data-history="power"><div class="metric-heading"><svg class="icon metric-icon"><use href="#bolt"/></svg><div><h2>Momentanleistung</h2><div class="metric-value" id="power">—</div><div class="metric-note" id="powerNote">Einheit aus Quellprofil</div></div></div><div class="history-hint">Verlauf öffnen</div></article>
 <article class="surface metric energy-panel" data-history="energy"><div class="metric-heading"><svg class="icon metric-icon"><use href="#energy-icon"/></svg><div><h2>Gesamtverbrauch</h2><div class="metric-value" id="energy">—</div><div class="metric-note" id="energyNote">Einheit aus Quellprofil</div></div></div><div class="monthly-energy"><span>Monatsverbrauch (laufend)</span><strong id="monthlyEnergy">—</strong></div><div class="metric-note" id="monthlyEnergyNote"></div><div class="history-hint">Verlauf öffnen</div></article>
@@ -318,16 +318,8 @@ function renderSetpoint(data) {
     byId('setpointValue').textContent = number(entry.value) + ' °C';
     if (data.setpointError) finishSetpoint(data.setpointError);
     else if (setpointPending !== null && entry.value === setpointPending) finishSetpoint('');
-    const input = byId('setpointInput');
     const select = byId('setpointSelect');
     const choices = config.choices || [];
-    input.hidden = choices.length > 0;
-    select.hidden = choices.length === 0;
-    for (const key of ['min', 'max', 'step']) input.removeAttribute(key);
-    if (config.min != null) input.min = config.min;
-    if (config.max != null) input.max = config.max;
-    input.step = config.step || (config.type === 1 ? 1 : 'any');
-    if (!setpointDirty && setpointPending === null && document.activeElement !== input) input.value = entry.value == null ? '' : String(entry.value);
     const signature = JSON.stringify(choices);
     if (select.dataset.signature !== signature) {
         select.dataset.signature = signature;
@@ -349,30 +341,21 @@ function renderSetpoint(data) {
         const index = choices.findIndex(choice => Number(choice.value) === entry.value);
         select.value = index < 0 ? '' : String(index);
     }
-    const disabled = !config.writable || entry.value === null || setpointPending !== null || typeof requestAction !== 'function';
-    input.disabled = disabled;
+    const disabled = !config.writable || !choices.length || entry.value === null || setpointPending !== null || typeof requestAction !== 'function';
     select.disabled = disabled;
     byId('setpointApply').disabled = disabled;
     let hint = config.reason || (typeof requestAction !== 'function' ? 'Steuerung nur in der Symcon-Kachel verfügbar.' : '');
     if (!hint && config.min != null) hint = 'Bereich laut Quelle: ' + config.min + ' bis ' + config.max + ' °C' + (config.step ? ' · Schritt ' + config.step : '');
-    if (!hint && !choices.length) hint = 'Keine Grenzen im Quellprofil hinterlegt; die Geräteaktion prüft die Eingabe.';
+    if (!hint && config.relative) hint = 'Aktueller Sollwert ±1 °C · keine Quellgrenzen hinterlegt; Geräteaktion prüft die Eingabe.';
     byId('setpointFeedback').textContent = setpointError || (setpointPending !== null ? 'Solltemperatur gesendet · warte auf Quellwert …' : hint);
 }
-byId('setpointInput').addEventListener('input', () => { setpointDirty = true; setpointError = ''; });
 byId('setpointSelect').addEventListener('change', () => { setpointDirty = true; setpointError = ''; });
 byId('setpointApply').addEventListener('click', () => {
     if (!current || !current.setpoint.writable || setpointPending !== null || typeof requestAction !== 'function') return;
     const config = current.setpoint;
-    let value;
-    if (config.choices.length) {
-        const choice = config.choices[Number(byId('setpointSelect').value)];
-        if (byId('setpointSelect').value === '' || !choice) return;
-        value = Number(choice.value);
-    } else {
-        const input = byId('setpointInput');
-        if (!input.reportValidity() || input.value === '') return;
-        value = input.valueAsNumber;
-    }
+    const choice = config.choices[Number(byId('setpointSelect').value)];
+    if (byId('setpointSelect').value === '' || !choice) return;
+    const value = Number(choice.value);
     if (!Number.isFinite(value)) return;
     setpointPending = value;
     setpointDirty = false;
