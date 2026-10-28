@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.18 · Build 19 · 2026-10-28
+
+- Daueranimation der Luftstrom-Striche entfernt; Farben, Luftwege und Richtungspfeile bleiben sichtbar.
+- Uhr-/SDK-Intervall und Größenanpassung bei verborgenem Dokument pausieren; beim Einblenden sofort aktualisieren.
+- Unveränderte Texte nicht erneut in den DOM schreiben, Zahlen-/Uhrformatierer wiederverwenden und Layoutsuche von 22 auf 14 Schritte reduzieren.
+- Echtzeit-Quellupdates, Aktionen, Diagramme und Sekundenanzeige der sichtbaren Kachel beibehalten.
+
 ## 1.17 · Build 18 · 2026-10-26
 
 - Optische Änderung aus Version 1.16 zurückgenommen; Dashboardgestaltung aus Version 1.15 wiederhergestellt.
